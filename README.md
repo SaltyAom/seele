@@ -21,7 +21,7 @@ TODO:
 - Will this be free to use?
     - Yes.
 - Will it have CORS restriction?
-    - Yes, that's the goal.
+    - No, that's the goal.
 - Will you also do REST API of this?
     - Mostly you can just use direct API instead.
 - Why Rust?
