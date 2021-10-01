@@ -1,0 +1,20 @@
+[package]
+name = "akashic"
+version = "0.1.0"
+authors = ["SaltyAom <aomkirby123@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = { version = "3.3.2", default-features = false }
+actix-cors = "0.5.4"
+
+async-graphql = { version = "2.10.1", features = ["apollo_tracing"] }
+async-graphql-actix-web = "2.9.15"
+
+serde = "1.0.130"
+serde_json = "1.0.68"
+
+reqwest = { version = "0.10.10", default-features = false, features = ["rustls-tls"] }
+cached = "0.25.0"
