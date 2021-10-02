@@ -15,6 +15,7 @@ async-graphql-actix-web = "2.9.15"
 
 serde = "1.0.130"
 serde_json = "1.0.68"
+serde-aux = "2.3.0"
 
 reqwest = { version = "0.10.10", default-features = false, features = ["rustls-tls"] }
 cached = "0.25.0"

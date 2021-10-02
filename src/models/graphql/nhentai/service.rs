@@ -1,43 +1,30 @@
-use super::model::*;
+use super::{ model::*, constant::* };
 use crate::services::request::get;
 
 use cached::proc_macro::cached;
 
 #[cached]
-pub async fn get_nhentai_by_id(id: i32) -> NHentai {
+pub async fn get_nhentai_by_id(id: u32) -> NHentai {
     let response = get::<NHentai>(
-        format!("{}/{}", "https://nhentai.net/api/gallery", id)
+        format!("https://nhentai.net/api/gallery/{}", id)
     );
 
     if let Ok(nhentai) = response.await {
         nhentai
     } else {
-        NHentai {
-            id: None,
-            title: NHentaiTitle {
-                english: None,
-                japanese: None,
-                pretty: None
-            },
-            media_id: None,
-            images: NHentaiImages {
-                pages: vec![],
-                cover: NHentaiPage {
-                    t: None, 
-                    w: None, 
-                    h: None
-                },
-                thumbnail: NHentaiPage { 
-                    t: None, 
-                    w: None, 
-                    h: None 
-                }
-            },
-            scanlator: None,
-            upload_date: None,
-            tags: vec![],
-            num_pages: None,
-            num_favorites: None
-        }
+        EMPTY_NHENTAI_DATA
+    }
+}
+
+#[cached]
+pub async fn search_nhentai(search: String, page: u16) -> NHentaiGroup {
+    let response = get::<NHentaiGroup>(
+        format!("https://nhentai.net/api/galleries/search?query={}&page={}", search, page)
+    );
+
+    if let Ok(nhentai) = response.await {
+        nhentai
+    } else {
+        EMPTY_NHENTAI_GROUP
     }
 }

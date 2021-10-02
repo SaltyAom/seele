@@ -1,4 +1,5 @@
 use serde::{ Serialize, Deserialize };
+use serde_aux::prelude::*;
 
 use async_graphql::*;
 
@@ -8,8 +9,10 @@ pub struct NHentaiQuery;
 
 #[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct NHentai {
+    #[serde(deserialize_with = "deserialize_option_number_from_string")]
     pub id: Option<u32>,
-    pub media_id: Option<String>,
+    #[serde(deserialize_with = "deserialize_option_number_from_string")]
+    pub media_id: Option<u32>,
     pub title: NHentaiTitle,
     pub images: NHentaiImages,
     pub scanlator: Option<String>,
@@ -56,6 +59,6 @@ pub type NHentaiTags = Vec<NHentaiTag>;
 #[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct NHentaiGroup {
     pub result: Vec<NHentai>,
-    pub num_pages: u16,
-    pub per_page: u8
+    pub num_pages: Option<u16>,
+    pub per_page: Option<u8>
 }

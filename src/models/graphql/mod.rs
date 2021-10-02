@@ -9,10 +9,10 @@ use async_graphql::{
     extensions::ApolloTracing 
 };
 
-use nhentai::NHentaiQuery;
+use nhentai::NHentaiQueryRoot;
 
 #[derive(MergedObject, Default)]
-pub struct Query(NHentaiQuery);
+pub struct Query(NHentaiQueryRoot);
 
 pub type AppSchema = Schema<Query, EmptyMutation, EmptySubscription>;
 
