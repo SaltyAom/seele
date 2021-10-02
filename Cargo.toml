@@ -19,3 +19,5 @@ serde-aux = "2.3.0"
 
 reqwest = { version = "0.10.10", default-features = false, features = ["rustls-tls"] }
 cached = "0.25.0"
+chrono = "0.4.19"
+anyhow = "1.0.44"

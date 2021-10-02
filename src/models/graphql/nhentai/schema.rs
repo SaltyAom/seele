@@ -21,7 +21,7 @@ impl NHentaiQuery {
         get_nhentai_by_id(id).await
     }
 
-    pub async fn search(&self, find: String, #[graphql(default = 1)] page: u16) -> NHentaiGroup {
-        search_nhentai(find, page).await
+    pub async fn search(&self, with: String, #[graphql(default = 1)] page: u16) -> NHentaiGroup {
+        search_nhentai(with, page).await
     }
 }

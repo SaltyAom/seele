@@ -11,10 +11,10 @@ pub async fn just_get(url: String) -> Result<String, reqwest::Error> {
     )
 }
 
-pub async fn get<'a, T>(url: String) -> Result<T, reqwest::Error> where T: DeserializeOwned + Clone {
+pub async fn get<'a, T>(url: String) -> anyhow::Result<T> where T: DeserializeOwned + Clone {
     let response = just_get(url).await?;
 
-    Ok(serde_json::from_str(&response).unwrap())
+    Ok(serde_json::from_str(&response)?)
 }
 
 // pub async fn parse_get<'a, T>(url: String, middleware: &dyn Fn(String) -> String) -> Result<T, reqwest::Error> where T: DeserializeOwned + Clone {

@@ -1,4 +1,4 @@
-pub mod nhapi;
+pub mod nhql;
 pub mod nhentai;
 
 use async_graphql::{ 
@@ -10,9 +10,10 @@ use async_graphql::{
 };
 
 use nhentai::NHentaiQueryRoot;
+use nhql::NhqlQueryRoot;
 
 #[derive(MergedObject, Default)]
-pub struct Query(NHentaiQueryRoot);
+pub struct Query(NHentaiQueryRoot, NhqlQueryRoot);
 
 pub type AppSchema = Schema<Query, EmptyMutation, EmptySubscription>;
 

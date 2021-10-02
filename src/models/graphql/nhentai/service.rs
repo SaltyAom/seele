@@ -22,9 +22,10 @@ pub async fn search_nhentai(search: String, page: u16) -> NHentaiGroup {
         format!("https://nhentai.net/api/galleries/search?query={}&page={}", search, page)
     );
 
-    if let Ok(nhentai) = response.await {
-        nhentai
-    } else {
-        EMPTY_NHENTAI_GROUP
+    match response.await {
+        Ok(nhentai) => nhentai,
+        Err(_error) => {
+            EMPTY_NHENTAI_GROUP
+        }
     }
 }
