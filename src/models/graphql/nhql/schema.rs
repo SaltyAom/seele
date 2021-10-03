@@ -12,6 +12,10 @@ impl NhqlQueryRoot {
     }
 }
 
+fn empty_vec() -> Vec<String> {
+    vec![]
+}
+
 #[derive(Default)]
 pub struct NhqlQuery;
 
@@ -21,7 +25,15 @@ impl NhqlQuery {
         get_nhql(id).await
     }
 
-    pub async fn search(&self, with: String, #[graphql(default = 1)] page: u16) -> NHSearchResponse {
-        search_nhql(with, page).await
+    pub async fn search(
+        &self, 
+        #[graphql(default = "")] with: String,
+        #[graphql(default = 1)] page: u16,
+        #[graphql(default_with = "empty_vec()")] includes: Vec<String>,
+        #[graphql(default_with = "empty_vec()")] excludes: Vec<String>,
+        #[graphql(default_with = "empty_vec()")] tags: Vec<String>,
+        #[graphql(default_with = "empty_vec()")] artists: Vec<String>
+    ) -> NHSearchResponse {
+        search_nhql(with, page, includes, excludes, tags, artists).await
     }
 }

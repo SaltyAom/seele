@@ -6,7 +6,6 @@ use async_graphql::*;
 #[derive(Default)]
 pub struct NHentaiQuery;
 
-
 #[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct NHentai {
     #[serde(deserialize_with = "deserialize_option_number_from_string")]

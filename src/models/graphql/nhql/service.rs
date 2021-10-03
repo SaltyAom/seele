@@ -4,9 +4,6 @@ use super::{
     super::nhentai::service::*,
 };
 
-use cached::proc_macro::cached;
-
-#[cached]
 pub async fn get_nhql(id: u32) -> NHResponse {
     let nhentai = get_nhentai_by_id(id).await;
 
@@ -25,9 +22,15 @@ pub async fn get_nhql(id: u32) -> NHResponse {
     }
 }
 
-#[cached]
-pub async fn search_nhql(find: String, page: u16) -> NHSearchResponse {
-    let nhentais = search_nhentai(find, page).await;
+pub async fn search_nhql(
+    find: String, 
+    page: u16, 
+    includes: Vec<String>, 
+    excludes: Vec<String>,
+    tags: Vec<String>,
+    artists: Vec<String>
+) -> NHSearchResponse {
+    let nhentais = search_nhentai(find, page, includes, excludes, tags, artists).await;
 
     if nhentais.result.len() == 0 {
         return NHSearchResponse {

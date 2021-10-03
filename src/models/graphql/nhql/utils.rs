@@ -4,7 +4,7 @@ use super::{
 };
 
 use chrono::NaiveDateTime;
-use cached::{SizedCache, cached_key};
+use cached::{ cached_key, TimedCache };
 
 fn to_cover(media_id: u32, extension: String) -> String {
     format!("https://t.nhentai.net/galleries/{}/cover.{}", media_id, map_extension(extension))
@@ -80,7 +80,7 @@ fn map_metadata(tags: NHentaiTags) -> NhqlMetadata {
 }
 
 cached_key! {
-    LENGTH: SizedCache<u32, Nhql> = SizedCache::with_size(250);
+    LENGTH: TimedCache<u32, Nhql> = TimedCache::with_lifespan(20);
     Key = { nhentai.id.unwrap_or(0) };
     fn map_nhql(nhentai: NHentai) -> Nhql = {
         let media_id = nhentai.media_id.unwrap();

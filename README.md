@@ -7,7 +7,7 @@ TODO:
     - [X] nhql remap
 - [ ] Fakku
     - [ ] Implement custom scrapper as public API went shutdown
-- [ ] e-hentai.org
+- [ ] ~~e-hentai.org~~ Not going to implement
 
 ## QA
 <img width=400 src="https://user-images.githubusercontent.com/35027979/133552450-0dd6e24e-6c80-4658-be9b-72fd8308efbd.png" alt="Elaina eating borgor" />
