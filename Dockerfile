@@ -13,7 +13,8 @@ RUN rustup target add x86_64-unknown-linux-musl
 RUN USER=root cargo new akashic
 WORKDIR /usr/src/akashic
 
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml .
+COPY Cargo.lock .
 
 RUN RUSTFLAGS='-C target-cpu=native' cargo build --release
 
