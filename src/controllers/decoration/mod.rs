@@ -3,7 +3,7 @@ use actix_files::NamedFile;
 
 #[get("/og.jpg")]
 pub async fn og_image() -> NamedFile {
-    NamedFile::open("public/index.html").unwrap()
+    NamedFile::open("public/og.jpg").unwrap()
 }
 
 pub fn use_decoration(config: &mut ServiceConfig) {
