@@ -1,5 +1,5 @@
 # * --- Build Stage ---
-FROM rust:1.55-alpine3.13 AS builder
+FROM rust:1.57-alpine3.13 AS builder
 ENV PKG_CONFIG_ALLOW_CROSS=1
 
 WORKDIR /usr/src/
@@ -23,22 +23,11 @@ COPY . .
 
 RUN RUSTFLAGS='-C target-cpu=native' cargo install --target x86_64-unknown-linux-musl --path .
 
-# * --- Compression Stage ---
-FROM alpine:3.13 AS compressor
-WORKDIR /usr/app
-
-RUN apk add --no-cache upx binutils
-
-COPY --from=builder /usr/local/cargo/bin/akashic .
-
-RUN strip akashic -o app-striped
-RUN upx app-striped --best --lzma -o app
-
 # * --- Running Stage ---
 FROM scratch
 
 COPY public /public
-COPY --from=compressor /usr/app/app .
+COPY --from=builder /usr/local/cargo/bin/akashic .
 
 EXPOSE 8080
 
