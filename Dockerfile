@@ -27,7 +27,7 @@ RUN RUSTFLAGS='-C target-cpu=native' cargo install --target x86_64-unknown-linux
 FROM scratch
 
 COPY public /public
-COPY --from=builder /usr/local/cargo/bin/akashic ./app
+COPY --from=builder /usr/local/cargo/bin/akashic app
 
 EXPOSE 8080
 
