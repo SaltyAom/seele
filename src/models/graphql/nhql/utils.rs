@@ -3,7 +3,6 @@ use super::{
     super::nhentai::model::*
 };
 
-use chrono::NaiveDateTime;
 use cached::{ cached_key, TimedCache };
 
 fn to_cover(media_id: u32, extension: String) -> String {
@@ -107,10 +106,7 @@ cached_key! {
             info: NhqlInfo {
                 amount: nhentai.images.pages.len() as u32,
                 favorite: nhentai.num_favorites.unwrap(),
-                upload: NhqlInfoUpload {
-                    original: nhentai.upload_date.unwrap(),
-                    parsed: NaiveDateTime::from_timestamp(nhentai.upload_date.unwrap() as i64, 0).to_string()
-                }
+                upload: nhentai.upload_date.unwrap()
             },
             metadata: map_metadata(nhentai.tags)
         }

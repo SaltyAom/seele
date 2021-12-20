@@ -1,6 +1,7 @@
-use async_graphql::SimpleObject;
+use async_graphql::{ SimpleObject, ComplexObject };
 
 use serde::Serialize;
+use super::service::{ get_nhql_comment, get_nhql_related };
 
 #[derive(Serialize, Clone, SimpleObject)]
 pub struct NHResponse {
@@ -17,12 +18,30 @@ pub struct NHSearchResponse {
 }
 
 #[derive(Serialize, Clone, SimpleObject)]
+#[graphql(complex)]
 pub struct Nhql {
     pub id: u32,
     pub title: NhqlTitle,
     pub images: NhqlImages,
     pub info: NhqlInfo,
     pub metadata: NhqlMetadata
+}
+
+#[ComplexObject]
+impl Nhql {
+    pub async fn comments(
+        &self, 
+        from: Option<u32>,     
+        to: Option<u32>,
+        batch: Option<u32>,
+        batch_by: Option<u32>
+    ) -> Vec<NhqlComment> {
+        get_nhql_comment(self.id, from, to, batch, batch_by).await
+    }
+
+    pub async fn related(&self) -> Vec<Nhql> {
+        get_nhql_related(self.id).await
+    }
 }
 
 #[derive(Serialize, Clone, SimpleObject)]
@@ -57,13 +76,7 @@ pub type NhqlPages = Vec<NhqlPage>;
 pub struct NhqlInfo {
     pub amount: u32,
     pub favorite: u32,
-    pub upload: NhqlInfoUpload
-}
-
-#[derive(Serialize, Clone, SimpleObject)]
-pub struct NhqlInfoUpload {
-    pub original: u32,
-    pub parsed: String
+    pub upload: u32
 }
 
 #[derive(Serialize, Clone, SimpleObject)]
@@ -89,3 +102,19 @@ pub struct NhqlTag {
 
 pub type NhqlTags = Vec<NhqlTag>;
 pub type NhqlSearch = Vec<Nhql>;
+
+#[derive(Serialize, Clone, SimpleObject)]
+pub struct NhqlComment {
+    pub id: u32,
+    pub user: NhqlUser,
+    pub created: u32,
+    pub body: String
+}
+
+#[derive(Serialize, Clone, SimpleObject)]
+pub struct NhqlUser {
+    pub id: u32,
+    pub username: String,
+    pub slug: String,
+    pub avatar: String
+}

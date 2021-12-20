@@ -58,3 +58,77 @@ pub async fn search_nhentai(
         }
     }
 }
+
+#[cached]
+pub async fn get_comment(
+    id: u32
+) -> Vec<NHentaiComment> {
+    let response = get::<Vec<NHentaiComment>>(
+        format!("https://nhentai.net/api/gallery/{}/comments", id)
+    );
+
+    if let Ok(comments) = response.await {
+        comments
+    } else {
+        vec![]
+    }
+}
+
+pub async fn get_comment_range(
+    id: u32,
+    from: Option<u32>,
+    to: Option<u32>,
+    batch: Option<u32>,
+    batch_by: Option<u32>
+) -> Vec<NHentaiComment> {
+    let comments = get_comment(id).await;
+
+    if let Some(batch) = batch {
+        let mut result = vec![];
+        let batch_by = batch_by.unwrap_or(25);
+
+        if batch <= 0 {
+            return vec![];
+        }
+
+        let batch_from = (batch - 1) * batch_by;
+        let batch_to = batch * batch_by;
+        
+        for index in (batch_from)..(batch_to) {
+            if (index as usize) >= comments.len() {
+                break
+            }
+
+            result.push(comments[index as usize].clone());
+        }
+
+        return result;
+    }
+
+    let mut result = vec![];
+    let from = from.unwrap_or(0);
+    let to = to.unwrap_or(comments.len() as u32) + 1;
+
+    for index in (from)..(to) {
+        if (index as usize) >= comments.len() {
+            break
+        }
+
+        result.push(comments[index as usize].clone());
+    }
+
+    result
+}
+
+#[cached]
+pub async fn get_related(id: u32) -> Vec<NHentai> {
+    let response = get::<NHentaiRelated>(
+        format!("https://nhentai.net/api/gallery/{}/related", id)
+    );
+
+    if let Ok(related) = response.await {
+        related.result
+    } else {
+        vec![]
+    }
+}

@@ -5,8 +5,8 @@ use async_graphql::{
     Schema,
     MergedObject, 
     EmptyMutation, 
-    EmptySubscription, 
-    extensions::ApolloTracing 
+    EmptySubscription,
+    // extensions::ApolloTracing 
 };
 
 use nhentai::NHentaiQueryRoot;
@@ -23,6 +23,6 @@ pub fn create_schema() -> AppSchema {
         EmptyMutation,
         EmptySubscription
     )
-    .extension(ApolloTracing)
+    // .extension(ApolloTracing)
     .finish()
 }

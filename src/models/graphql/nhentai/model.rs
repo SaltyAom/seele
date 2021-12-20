@@ -3,10 +3,13 @@ use serde_aux::prelude::*;
 
 use async_graphql::*;
 
+use super::service::{ get_comment_range, get_related };
+
 #[derive(Default)]
 pub struct NHentaiQuery;
 
 #[derive(Serialize, Deserialize, Clone, SimpleObject)]
+#[graphql(complex)]
 pub struct NHentai {
     #[serde(deserialize_with = "deserialize_option_number_from_string")]
     pub id: Option<u32>,
@@ -26,6 +29,25 @@ pub struct NHentaiTitle {
     pub english: Option<String>,
     pub japanese: Option<String>,
     pub pretty: Option<String>
+}
+
+#[ComplexObject]
+impl NHentai {
+    pub async fn comments(
+        &self, 
+        from: Option<u32>,     
+        to: Option<u32>,
+        batch: Option<u32>,
+        batch_by: Option<u32>
+    ) -> Vec<NHentaiComment> {
+        get_comment_range(self.id.unwrap(), from, to, batch, batch_by).await
+    }
+
+    pub async fn related(
+        &self, 
+    ) -> Vec<NHentai> {
+        get_related(self.id.unwrap()).await
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, SimpleObject)]
@@ -60,4 +82,28 @@ pub struct NHentaiGroup {
     pub result: Vec<NHentai>,
     pub num_pages: Option<u16>,
     pub per_page: Option<u8>
+}
+
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
+pub struct NHentaiComment {
+    pub id: u32,
+    pub gallery_id: u32,
+    pub poster: NHentaiCommentPoster,
+    pub post_date: u32,
+    pub body: String
+}
+
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
+pub struct NHentaiCommentPoster {
+    pub id: u32,
+    pub username: String,
+    pub slug: String,
+    pub avatar_url: String,
+    pub is_superuser: bool,
+    pub is_staff: bool
+}
+
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
+pub struct NHentaiRelated {
+    pub result: Vec<NHentai>
 }

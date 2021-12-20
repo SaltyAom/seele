@@ -1,24 +1,24 @@
 use actix_web::{web::{ Data, ServiceConfig }, get, post, HttpResponse, Result};
-use async_graphql_actix_web::{ Response, Request };
+use async_graphql_actix_web::{ GraphQLRequest, GraphQLResponse };
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 
 use crate::models::AppSchema;
 
-#[post("/graphql")]
+#[post("/v1/graphql")]
 pub async fn graphql_executor(
     schema: Data<AppSchema>,
-    request: Request
-) -> Response {
+    request: GraphQLRequest
+) -> GraphQLResponse {
     schema.execute(request.into_inner()).await.into()
 }
 
-#[get("/graphql")]
+#[get("/v1/graphql")]
 pub async fn playground() -> Result<HttpResponse> {
     Ok(
         HttpResponse::Ok()
             .content_type("text/html; charset=utf-8")
             .body(playground_source(
-                GraphQLPlaygroundConfig::new("/graphql"),
+                GraphQLPlaygroundConfig::new("/v1/graphql"),
             )
         )
     )
