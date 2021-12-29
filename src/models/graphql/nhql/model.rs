@@ -29,6 +29,12 @@ pub struct Nhql {
 
 #[ComplexObject]
 impl Nhql {
+    pub async fn total_comments(
+        &self,
+    ) -> usize {
+        get_nhql_comment(self.id, None, None, None, None).await.len()
+    }
+
     pub async fn comments(
         &self, 
         from: Option<u32>,     
