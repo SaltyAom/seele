@@ -1,19 +1,39 @@
 use async_graphql::{ SimpleObject, ComplexObject };
 
 use serde::Serialize;
-use super::service::{ get_nhql_comment, get_nhql_related };
+use super::{
+    service::{ get_nhql_comment, get_nhql_related },
+    super::nhentai::service::get_comment
+};
+
+use async_graphql::Enum;
+
+#[derive(Enum, Copy, Clone, Eq, PartialEq)]
+pub enum NhqlCommentOrder {
+    /// Order by comment date by descending order. (default)
+    Newest,
+    /// Order by comment date by ascending order
+    Oldest
+}
+
+#[derive(Serialize, Clone, SimpleObject)]
+pub struct MultipleNHResponse {
+    pub success: bool,
+    pub error: Option<&'static str>,
+    pub data: Vec<NHResponse>
+}
 
 #[derive(Serialize, Clone, SimpleObject)]
 pub struct NHResponse {
     pub success: bool,
-    pub info: Option<&'static str>,
+    pub error: Option<&'static str>,
     pub data: Option<Nhql>
 }
 
 #[derive(Serialize, Clone, SimpleObject)]
 pub struct NHSearchResponse {
     pub success: bool,
-    pub info: Option<&'static str>,
+    pub error: Option<&'static str>,
     pub data: NhqlSearch
 }
 
@@ -23,26 +43,34 @@ pub struct Nhql {
     pub id: u32,
     pub title: NhqlTitle,
     pub images: NhqlImages,
-    pub info: NhqlInfo,
+    pub error: NhqlInfo,
     pub metadata: NhqlMetadata
 }
 
 #[ComplexObject]
 impl Nhql {
-    pub async fn total_comments(
-        &self,
-    ) -> usize {
-        get_nhql_comment(self.id, None, None, None, None).await.len()
-    }
-
     pub async fn comments(
         &self, 
         from: Option<u32>,     
         to: Option<u32>,
         batch: Option<u32>,
-        batch_by: Option<u32>
-    ) -> Vec<NhqlComment> {
-        get_nhql_comment(self.id, from, to, batch, batch_by).await
+        batch_by: Option<u32>,
+        order_by: Option<NhqlCommentOrder>
+    ) -> NhqlCommentResponse {
+        let comments = get_nhql_comment(
+            self.id, 
+            from, 
+            to, 
+            batch,
+            batch_by, 
+            order_by
+        ).await;
+
+        NhqlCommentResponse {
+            // From cache
+            total: get_comment(self.id).await.len(),
+            data: comments
+        }
     }
 
     pub async fn related(&self) -> Vec<Nhql> {
@@ -66,7 +94,7 @@ pub struct NhqlImages {
 #[derive(Serialize, Clone, SimpleObject)]
 pub struct NhqlPage {
     pub link: String,
-    pub info: NhqlPageInfo
+    pub error: NhqlPageInfo
 }
 
 #[derive(Serialize, Clone, SimpleObject)]
@@ -110,11 +138,17 @@ pub type NhqlTags = Vec<NhqlTag>;
 pub type NhqlSearch = Vec<Nhql>;
 
 #[derive(Serialize, Clone, SimpleObject)]
+pub struct NhqlCommentResponse {
+    pub total: usize,
+    pub data: Vec<NhqlComment>
+}
+
+#[derive(Serialize, Clone, SimpleObject)]
 pub struct NhqlComment {
     pub id: u32,
     pub user: NhqlUser,
     pub created: u32,
-    pub body: String
+    pub comment: String
 }
 
 #[derive(Serialize, Clone, SimpleObject)]

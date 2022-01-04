@@ -3,6 +3,8 @@ use serde_aux::prelude::*;
 
 use async_graphql::*;
 
+use crate::models::graphql::nhql::model::NhqlCommentOrder;
+
 use super::service::{ get_comment_range, get_related };
 
 #[derive(Default)]
@@ -25,6 +27,13 @@ pub struct NHentai {
 }
 
 #[derive(Serialize, Deserialize, Clone, SimpleObject)]
+pub struct MultipleNHentaiResponse {
+    pub success: bool,
+    pub error: Option<&'static str>,
+    pub data: Vec<NHentai>
+}
+
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct NHentaiTitle {
     pub english: Option<String>,
     pub japanese: Option<String>,
@@ -38,9 +47,10 @@ impl NHentai {
         from: Option<u32>,     
         to: Option<u32>,
         batch: Option<u32>,
-        batch_by: Option<u32>
+        batch_by: Option<u32>,
+        order_by: Option<NhqlCommentOrder>
     ) -> Vec<NHentaiComment> {
-        get_comment_range(self.id.unwrap(), from, to, batch, batch_by).await
+        get_comment_range(self.id.unwrap(), from, to, batch, batch_by ,order_by).await
     }
 
     pub async fn related(

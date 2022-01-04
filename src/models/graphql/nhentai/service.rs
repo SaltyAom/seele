@@ -1,7 +1,27 @@
-use super::{ model::*, constant::* };
+use super::{
+    constant::*, 
+    model::*, 
+    super::nhql::model::NhqlCommentOrder
+};
 use crate::services::request::get;
 
 use cached::proc_macro::cached;
+
+pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
+    let responses = id.into_iter().map(move |id| {
+        tokio::spawn(async move {
+            get_nhentai_by_id(id).await
+        })
+    })
+    .collect::<Vec<tokio::task::JoinHandle<NHentai>>>();
+
+    let mut hentais: Vec<NHentai> = vec![];
+    for response in responses {
+        hentais.push(response.await.unwrap_or(EMPTY_NHENTAI_DATA));
+    }
+
+    hentais
+}
 
 #[cached]
 pub async fn get_nhentai_by_id(id: u32) -> NHentai {
@@ -18,9 +38,9 @@ pub async fn get_nhentai_by_id(id: u32) -> NHentai {
 
 #[cached]
 pub async fn search_nhentai(
-    search: String, 
-    page: u16, 
-    includes: Vec<String>, 
+    search: String,
+    page: u16,
+    includes: Vec<String>,
     excludes: Vec<String>,
     tags: Vec<String>,
     artists: Vec<String>,
@@ -47,25 +67,21 @@ pub async fn search_nhentai(
         }
     }
 
-    let response = get::<NHentaiGroup>(
-        format!("https://nhentai.net/api/galleries/search?query={}&page={}", query, page)
-    );
+    let response = get::<NHentaiGroup>(format!(
+        "https://nhentai.net/api/galleries/search?query={}&page={}",
+        query, page
+    ));
 
     match response.await {
         Ok(nhentai) => nhentai,
-        Err(_error) => {
-            EMPTY_NHENTAI_GROUP
-        }
+        Err(_error) => EMPTY_NHENTAI_GROUP,
     }
 }
 
 #[cached]
-pub async fn get_comment(
-    id: u32
-) -> Vec<NHentaiComment> {
-    let response = get::<Vec<NHentaiComment>>(
-        format!("https://nhentai.net/api/gallery/{}/comments", id)
-    );
+pub async fn get_comment(id: u32) -> Vec<NHentaiComment> {
+    let response =
+        get::<Vec<NHentaiComment>>(format!("https://nhentai.net/api/gallery/{}/comments", id));
 
     if let Ok(comments) = response.await {
         comments
@@ -79,9 +95,14 @@ pub async fn get_comment_range(
     from: Option<u32>,
     to: Option<u32>,
     batch: Option<u32>,
-    batch_by: Option<u32>
+    batch_by: Option<u32>,
+    order_by: Option<NhqlCommentOrder>,
 ) -> Vec<NHentaiComment> {
-    let comments = get_comment(id).await;
+    let mut comments = get_comment(id).await;
+
+    if order_by.unwrap_or(NhqlCommentOrder::Newest) == NhqlCommentOrder::Oldest {
+        comments.sort_by(|a, b| a.post_date.cmp(&b.post_date));
+    }
 
     if let Some(batch) = batch {
         let mut result = vec![];
@@ -93,10 +114,10 @@ pub async fn get_comment_range(
 
         let batch_from = (batch - 1) * batch_by;
         let batch_to = batch * batch_by;
-        
+
         for index in (batch_from)..(batch_to) {
             if (index as usize) >= comments.len() {
-                break
+                break;
             }
 
             result.push(comments[index as usize].clone());
@@ -111,7 +132,7 @@ pub async fn get_comment_range(
 
     for index in (from)..(to) {
         if (index as usize) >= comments.len() {
-            break
+            break;
         }
 
         result.push(comments[index as usize].clone());
@@ -122,9 +143,7 @@ pub async fn get_comment_range(
 
 #[cached]
 pub async fn get_related(id: u32) -> Vec<NHentai> {
-    let response = get::<NHentaiRelated>(
-        format!("https://nhentai.net/api/gallery/{}/related", id)
-    );
+    let response = get::<NHentaiRelated>(format!("https://nhentai.net/api/gallery/{}/related", id));
 
     if let Ok(related) = response.await {
         related.result

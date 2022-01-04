@@ -1,6 +1,6 @@
 use async_graphql::Object;
 
-use super::{model::{NHResponse, NHSearchResponse}, service::*};
+use super::{model::{NHResponse, NHSearchResponse, MultipleNHResponse}, service::*};
 
 #[derive(Default)]
 pub struct NhqlQueryRoot;
@@ -23,6 +23,34 @@ pub struct NhqlQuery;
 impl NhqlQuery {
     pub async fn by(&self, id: u32) -> NHResponse {
         get_nhql(id).await
+    }
+
+    pub async fn multiple(&self, id: Vec<u32>) -> MultipleNHResponse {
+        let mut dedup_id = id.clone();
+        dedup_id.sort();
+        dedup_id.dedup();
+
+        if dedup_id.len() != id.len() {
+            return MultipleNHResponse {
+                success: false,
+                error: Some("Ids have to be unique"),
+                data: vec![],
+            };
+        }
+
+        if id.len() > 25 {
+            return MultipleNHResponse {
+                success: false,
+                error: Some("Ids is limit to 25 per request"),
+                data: vec![]
+            }
+        }
+
+        MultipleNHResponse {
+            success: true,
+            error: None,
+            data: get_multiple_nhql(id).await
+        }
     }
 
     pub async fn search(
