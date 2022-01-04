@@ -43,7 +43,7 @@ pub struct Nhql {
     pub id: u32,
     pub title: NhqlTitle,
     pub images: NhqlImages,
-    pub error: NhqlInfo,
+    pub info: NhqlInfo,
     pub metadata: NhqlMetadata
 }
 

@@ -103,7 +103,7 @@ cached_key! {
                 },
                 pages: map_images(media_id, &nhentai.images.pages)
             },
-            error: NhqlInfo {
+            info: NhqlInfo {
                 amount: nhentai.images.pages.len() as u32,
                 favorite: nhentai.num_favorites.unwrap(),
                 upload: nhentai.upload_date.unwrap()
