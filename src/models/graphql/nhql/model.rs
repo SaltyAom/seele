@@ -94,7 +94,7 @@ pub struct NhqlImages {
 #[derive(Serialize, Clone, SimpleObject)]
 pub struct NhqlPage {
     pub link: String,
-    pub error: NhqlPageInfo
+    pub info: NhqlPageInfo
 }
 
 #[derive(Serialize, Clone, SimpleObject)]

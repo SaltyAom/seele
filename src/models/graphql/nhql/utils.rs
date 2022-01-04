@@ -24,7 +24,7 @@ fn map_images(media_id: u32, pages: &NHentaiPages) -> NhqlPages {
 
         NhqlPage {
             link: format!("https://i.nhentai.net/galleries/{}/{}.{}", media_id, index + 1, extension),
-            error: NhqlPageInfo {
+            info: NhqlPageInfo {
                 r#type: extension,
                 width: page.w.unwrap(),
                 height: page.h.unwrap()
@@ -95,7 +95,7 @@ cached_key! {
             images: NhqlImages {
                 cover: NhqlPage {
                     link: to_cover(media_id, extension.to_owned()),
-                    error: NhqlPageInfo {
+                    info: NhqlPageInfo {
                         width: nhentai.images.cover.w.unwrap(),
                         height: nhentai.images.cover.h.unwrap(),
                         r#type: map_extension(extension),
