@@ -110,7 +110,8 @@ pub type NhqlPages = Vec<NhqlPage>;
 pub struct NhqlInfo {
     pub amount: u32,
     pub favorite: u32,
-    pub upload: u32
+    pub upload: u32,
+    pub media_id: u32
 }
 
 #[derive(Serialize, Clone, SimpleObject)]

@@ -321,6 +321,7 @@ dependencies = [
  "async-graphql",
  "async-graphql-actix-web",
  "cached",
+ "futures",
  "reqwest",
  "serde",
  "serde-aux",

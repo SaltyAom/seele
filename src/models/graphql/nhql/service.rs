@@ -1,33 +1,37 @@
 use super::{
     super::nhentai::service::{
-        get_comment_range, get_nhentai_by_id, get_nhentais_by_id, get_related, search_nhentai,
+        get_comment_range, 
+        get_nhentai_by_id, 
+        // get_nhentais_by_id, 
+        get_related, 
+        search_nhentai
     },
     model::*,
     utils::*,
 };
 
-pub async fn get_multiple_nhql(id: Vec<u32>) -> Vec<NHResponse> {
-    let nhentais = get_nhentais_by_id(id).await;
+// pub async fn get_multiple_nhql(id: Vec<u32>) -> Vec<NHResponse> {
+//     let nhentais = get_nhentais_by_id(id).await;
 
-    nhentais
-        .into_iter()
-        .map(move |nhentai| {
-            if nhentai.id.is_some() {
-                NHResponse {
-                    success: true,
-                    error: None,
-                    data: Some(map_nhql(nhentai))
-                }
-            } else {
-                NHResponse {
-                    success: false,
-                    error: Some("Not found"),
-                    data: None
-                }
-            }
-        })
-        .collect::<Vec<NHResponse>>()
-}
+//     nhentais
+//         .into_iter()
+//         .map(move |nhentai| {
+//             if nhentai.id.is_some() {
+//                 NHResponse {
+//                     success: true,
+//                     error: None,
+//                     data: Some(map_nhql(nhentai))
+//                 }
+//             } else {
+//                 NHResponse {
+//                     success: false,
+//                     error: Some("Not found"),
+//                     data: None
+//                 }
+//             }
+//         })
+//         .collect::<Vec<NHResponse>>()
+// }
 
 pub async fn get_nhql(id: u32) -> NHResponse {
     let nhentai = get_nhentai_by_id(id).await;

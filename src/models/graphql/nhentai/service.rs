@@ -7,21 +7,44 @@ use crate::services::request::get;
 
 use cached::proc_macro::cached;
 
-pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
-    let responses = id.into_iter().map(move |id| {
-        tokio::spawn(async move {
-            get_nhentai_by_id(id).await
-        })
-    })
-    .collect::<Vec<tokio::task::JoinHandle<NHentai>>>();
+// use futures::{stream, StreamExt};
+// use tokio::time::{sleep, Duration};
 
-    let mut hentais: Vec<NHentai> = vec![];
-    for response in responses {
-        hentais.push(response.await.unwrap_or(EMPTY_NHENTAI_DATA));
-    }
+// const PARALLEL_REQUESTS: usize = 6;
 
-    hentais
-}
+// pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
+//     let limit = id.len();
+//     let (tx, mut rx) = tokio::sync::mpsc::channel::<NHentai>(limit);
+
+//     let responses = stream::iter(id)
+//         .map(|id| {
+//             tokio::spawn(async move {
+//                 sleep(Duration::from_millis(100)).await;
+//                 get_nhentai_by_id(id).await
+//             })
+//         })
+//         .buffered(PARALLEL_REQUESTS);
+
+//     responses
+//         .for_each(|res| async {
+//             match tx.send(res.unwrap_or(EMPTY_NHENTAI_DATA)).await {
+//                 Ok(_a) => {},
+//                 Err(_e) => {}
+//             }
+//         })
+//         .await;
+
+//     let mut hentais: Vec<NHentai> = vec![];
+//     while let Some(nhentai) = rx.recv().await {
+//         hentais.push(nhentai);
+
+//         if hentais.len() >= limit - 1 {
+//             break
+//         }
+//     }
+
+//     hentais
+// }
 
 #[cached]
 pub async fn get_nhentai_by_id(id: u32) -> NHentai {

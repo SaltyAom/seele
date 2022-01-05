@@ -16,7 +16,7 @@ pub async fn deserialize<'a, T>(response: String) -> anyhow::Result<T> where T: 
 }
 
 pub async fn get<'a, T>(url: String) -> anyhow::Result<T> where T: DeserializeOwned + Clone {
-    let response = just_get(url).await?;
+    let response = just_get(url.to_owned()).await?;
 
     deserialize::<T>(response).await
 }

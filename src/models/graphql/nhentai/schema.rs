@@ -1,7 +1,11 @@
 use async_graphql::Object;
 
 use super::{
-    model::{MultipleNHentaiResponse, NHentai, NHentaiGroup},
+    model::{
+        // MultipleNHentaiResponse, 
+        NHentai, 
+        NHentaiGroup
+    },
     service::*,
 };
 
@@ -28,35 +32,36 @@ impl NHentaiQuery {
         get_nhentai_by_id(id).await
     }
 
-    pub async fn multiple(&self, id: Vec<u32>) -> MultipleNHentaiResponse {
-        let mut dedup_id = id.clone();
-        dedup_id.sort();
-        dedup_id.dedup();
+    // ? Disabled due to nHentai NGINX rate limit
+    // pub async fn multiple(&self, id: Vec<u32>) -> MultipleNHentaiResponse {
+    //     let mut dedup_id = id.clone();
+    //     dedup_id.sort();
+    //     dedup_id.dedup();
 
-        if dedup_id.len() != id.len() {
-            return MultipleNHentaiResponse {
-                success: false,
-                error: Some("Ids have to be unique"),
-                data: vec![],
-            };
-        }
+    //     if dedup_id.len() != id.len() {
+    //         return MultipleNHentaiResponse {
+    //             success: false,
+    //             error: Some("Ids have to be unique"),
+    //             data: vec![],
+    //         };
+    //     }
 
-        if id.len() > 25 {
-            return MultipleNHentaiResponse {
-                success: false,
-                error: Some("Ids is limit to 25 per request"),
-                data: vec![],
-            };
-        }
+    //     if id.len() > 25 {
+    //         return MultipleNHentaiResponse {
+    //             success: false,
+    //             error: Some("Ids is limit to 25 per request"),
+    //             data: vec![],
+    //         };
+    //     }
 
-        let hentais = get_nhentais_by_id(id).await;
+    //     let hentais = get_nhentais_by_id(id).await;
 
-        MultipleNHentaiResponse {
-            success: true,
-            error: None,
-            data: hentais,
-        }
-    }
+    //     MultipleNHentaiResponse {
+    //         success: true,
+    //         error: None,
+    //         data: hentais,
+    //     }
+    // }
 
     pub async fn search(
         &self,
