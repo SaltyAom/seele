@@ -50,15 +50,26 @@ pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
 pub async fn internal_get_nhentai_by_id(id: u32, channel: u8) -> Option<InternalNHentai> {
     let endpoint = match channel {
         0 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
-        1 => format!("https://nhentai.net/api/gallery/{}", id),
+        1 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
+        2 => format!("https://nhentai.net/api/gallery/{}", id),
         _ => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
     };
 
     if let Ok(nhentai) = get::<InternalNHentai>(endpoint).await {
-        Some(nhentai)
-    } else {
-        None
+        return Some(nhentai)
     }
+     
+    if channel != 0 {
+        return None
+    }
+
+    if let Ok(nhentai) = get::<InternalNHentai>(
+        format!("https://nhentai.net/api/gallery/{}", id
+    )).await {
+        return Some(nhentai)
+    }
+
+    None
 }
 
 pub async fn get_nhentai_by_id(id: u32, channel: NhqlChannel) -> NHentai {
@@ -144,15 +155,26 @@ pub async fn search_nhentai(
 pub async fn get_comment(id: u32, channel: u8) -> Vec<NHentaiComment> {
     let endpoint = match channel {
         0 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
-        1 => format!("https://nhentai.net/api/gallery/{}/comments", id),
+        1 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
+        2 => format!("https://nhentai.net/api/gallery/{}/comments", id),
         _ => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
     };
 
     if let Ok(comments) = get::<Vec<NHentaiComment>>(endpoint).await {
-        comments
-    } else {
-        vec![]
+        return comments
     }
+
+    if channel != 0 {
+        return vec![]
+    }
+
+    if let Ok(comments) = get::<Vec<NHentaiComment>>(
+        format!("https://nhentai.net/api/gallery/{}/comments", id)
+    ).await {
+        return comments
+    }
+
+    vec![]
 }
 
 pub async fn get_comment_range(

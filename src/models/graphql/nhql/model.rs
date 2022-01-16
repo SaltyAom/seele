@@ -17,14 +17,15 @@ pub enum NhqlCommentOrder {
 /// Specified source origin
 #[derive(Serialize, Deserialize, Enum, Copy, Clone, Eq, PartialEq)]
 pub enum NhqlChannel {
+    /// Strategy: Hifumin first then fallback to nHentai.
+    /// (DEFAULT)
+    HifumiFirst = 0,
     /// Hifumin mirror, updates every 12 hours with no rate limit
-    /// You will want to use this if data loss is not toleratable.
-    /// Most of the time you will want to use this
-    /// (Default)
-    Hifumin = 0,
+    /// Best if data loss is not toleratable.
+    Hifumin = 1,
     /// Use direct NHentai API, with rate limit and possibly maintain only 7 concurrent connections
-    /// You will want to use this fresh new data is important but data loss is not toleratable
-    Nhentai = 1
+    /// Best for fresh new data but data loss is toleratable
+    Nhentai = 2
 }
 
 #[derive(Serialize, Clone, SimpleObject)]

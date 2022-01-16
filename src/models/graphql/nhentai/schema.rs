@@ -29,7 +29,7 @@ fn empty_vec() -> Vec<String> {
 }
 
 fn default_channel() -> NhqlChannel {
-    NhqlChannel::Hifumin
+    NhqlChannel::HifumiFirst
 }
 
 #[Object]
