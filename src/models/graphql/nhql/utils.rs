@@ -1,6 +1,6 @@
 use super::{
     model::*,
-    super::nhentai::model::*
+    super::nhentai::model::*,
 };
 
 use cached::{ cached_key, TimedCache };
@@ -37,24 +37,60 @@ pub fn map_tag(tag: &str) -> String {
     format!("https://nhentai.net{}", tag)
 }
 
-fn map_metadata(tags: NHentaiTags) -> NhqlMetadata {
-    let mut artist = NhqlArtist {
-        name: String::from(""),
-        count: 0,
-        url: map_tag("")
-    };
+fn map_metadata(nhentai_tags: NHentaiTags) -> NhqlMetadata {
+    let mut parodies = vec![];
+    let mut characters = vec![];
+    let mut groups = vec![];
+    let mut categories = vec![];
+    let mut artists = vec![];
+
     let mut language: String = "translated".to_owned();
 
-    let mut nh_api_tags: NhqlTags = vec![];
+    let mut tags: NhqlTags = vec![];
 
-    for tag in tags.into_iter() {
+    for tag in nhentai_tags.into_iter() {
         match &tag.r#type[..] {
-            "artist" => {
-                artist = NhqlArtist {
+            "tag" => {
+                tags.push(NhqlTag {
                     name: tag.name.to_owned(),
                     count: tag.count,
                     url: map_tag(&tag.url)
-                }
+                })
+            },
+            "parody" => {
+                parodies.push(NhqlTag {
+                    name: tag.name.to_owned(),
+                    count: tag.count,
+                    url: map_tag(&tag.url)
+                })
+            },
+            "character" => {
+                characters.push(NhqlTag {
+                    name: tag.name.to_owned(),
+                    count: tag.count,
+                    url: map_tag(&tag.url)
+                })
+            },
+            "group" => {
+                groups.push(NhqlTag {
+                    name: tag.name.to_owned(),
+                    count: tag.count,
+                    url: map_tag(&tag.url)
+                })
+            },
+            "category" => {
+                categories.push(NhqlTag {
+                    name: tag.name.to_owned(),
+                    count: tag.count,
+                    url: map_tag(&tag.url)
+                })
+            },
+            "artist" => {
+                artists.push(NhqlTag {
+                    name: tag.name.to_owned(),
+                    count: tag.count,
+                    url: map_tag(&tag.url)
+                })
             },
             "language" => {
                 if tag.name != "translated" {
@@ -62,7 +98,7 @@ fn map_metadata(tags: NHentaiTags) -> NhqlMetadata {
                 }
             },
             _ => {
-                nh_api_tags.push(NhqlTag {
+                tags.push(NhqlTag {
                     name: tag.name.to_owned(),
                     count: tag.count,
                     url: map_tag(&tag.url)
@@ -72,9 +108,13 @@ fn map_metadata(tags: NHentaiTags) -> NhqlMetadata {
     }
 
     NhqlMetadata {
-        artist,
+        parodies,
+        characters,
+        groups,
+        categories,    
+        artists,
         language,
-        tags: nh_api_tags
+        tags
     }
 }
 

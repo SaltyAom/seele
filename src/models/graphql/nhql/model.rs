@@ -116,16 +116,13 @@ pub struct NhqlInfo {
 
 #[derive(Serialize, Clone, SimpleObject)]
 pub struct NhqlMetadata {
-    pub artist: NhqlArtist,
+    pub parodies: NhqlTags,
+    pub characters: NhqlTags,
+    pub groups: NhqlTags,
+    pub categories: NhqlTags,
+    pub artists: NhqlTags,
     pub tags: NhqlTags,
     pub language: String
-}
-
-#[derive(Serialize, Clone, SimpleObject)]
-pub struct NhqlArtist {
-    pub name: String,
-    pub count: u32,
-    pub url: String
 }
 
 #[derive(Serialize, Clone, SimpleObject)]
