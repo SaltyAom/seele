@@ -114,13 +114,28 @@ pub async fn search_nhentai(
         }
     }
 
-    let response = get::<NHentaiGroup>(format!(
+    let response = get::<InternalNHentaiGroup>(format!(
         "https://nhentai.net/api/galleries/search?query={}&page={}",
         query, page
     ));
 
     match response.await {
-        Ok(nhentai) => nhentai,
+        Ok(nhentai) => NHentaiGroup {
+            num_pages: nhentai.num_pages,
+            per_page: nhentai.per_page,
+            result: nhentai.result.into_iter().map(|hentai| NHentai {
+                id: hentai.id,
+                title: hentai.title,
+                media_id: hentai.media_id,
+                images: hentai.images,
+                scanlator: hentai.scanlator,
+                upload_date: hentai.upload_date,
+                tags: hentai.tags,
+                num_pages: hentai.num_pages,
+                num_favorites: hentai.num_favorites,
+                channel: NhqlChannel::Nhentai,
+            }).collect(),
+        },
         Err(_error) => EMPTY_NHENTAI_GROUP,
     }
 }

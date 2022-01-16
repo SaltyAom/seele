@@ -111,6 +111,13 @@ pub struct NHentaiGroup {
 }
 
 #[derive(Serialize, Deserialize, Clone, SimpleObject)]
+pub struct InternalNHentaiGroup {
+    pub result: Vec<InternalNHentai>,
+    pub num_pages: Option<u16>,
+    pub per_page: Option<u8>
+}
+
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct NHentaiComment {
     pub id: u32,
     pub gallery_id: u32,
