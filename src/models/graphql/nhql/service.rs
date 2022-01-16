@@ -2,7 +2,7 @@ use super::{
     super::nhentai::service::{
         get_comment_range, 
         get_nhentai_by_id, 
-        // get_nhentais_by_id, 
+        get_nhentais_by_id, 
         get_related, 
         search_nhentai
     },
@@ -10,31 +10,31 @@ use super::{
     utils::*,
 };
 
-// pub async fn get_multiple_nhql(id: Vec<u32>) -> Vec<NHResponse> {
-//     let nhentais = get_nhentais_by_id(id).await;
+pub async fn get_multiple_nhql(id: Vec<u32>) -> Vec<NHResponse> {
+    let nhentais = get_nhentais_by_id(id).await;
 
-//     nhentais
-//         .into_iter()
-//         .map(move |nhentai| {
-//             if nhentai.id.is_some() {
-//                 NHResponse {
-//                     success: true,
-//                     error: None,
-//                     data: Some(map_nhql(nhentai))
-//                 }
-//             } else {
-//                 NHResponse {
-//                     success: false,
-//                     error: Some("Not found"),
-//                     data: None
-//                 }
-//             }
-//         })
-//         .collect::<Vec<NHResponse>>()
-// }
+    nhentais
+        .into_iter()
+        .map(move |nhentai| {
+            if nhentai.id.is_some() {
+                NHResponse {
+                    success: true,
+                    error: None,
+                    data: Some(map_nhql(nhentai))
+                }
+            } else {
+                NHResponse {
+                    success: false,
+                    error: Some("Not found"),
+                    data: None
+                }
+            }
+        })
+        .collect::<Vec<NHResponse>>()
+}
 
 pub async fn get_nhql(id: u32, channel: NhqlChannel) -> NHResponse {
-    let nhentai = get_nhentai_by_id(id, channel as u8).await;
+    let nhentai = get_nhentai_by_id(id, channel).await;
 
     if nhentai.id.is_none() {
         return NHResponse {
@@ -87,8 +87,9 @@ pub async fn get_nhql_comment(
     batch: Option<u32>,
     batch_by: Option<u32>,
     order_by: Option<NhqlCommentOrder>,
+    channel: NhqlChannel
 ) -> Vec<NhqlComment> {
-    get_comment_range(id, from, to, batch, batch_by, order_by)
+    get_comment_range(id, from, to, batch, batch_by, order_by, channel)
         .await
         .into_iter()
         .map(|comment| NhqlComment {

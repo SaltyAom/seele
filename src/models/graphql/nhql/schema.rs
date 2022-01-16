@@ -5,8 +5,8 @@ use super::{
     model::{
         NHResponse, 
         NHSearchResponse, 
-        NhqlChannel
-        // MultipleNHResponse
+        NhqlChannel,
+        MultipleNHResponse
     },
 };
 
@@ -41,34 +41,33 @@ impl NhqlQuery {
         get_nhql(id, channel).await
     }
 
-    // ? Disabled due to nHentai NGINX rate limit
-    // pub async fn multiple(&self, id: Vec<u32>) -> MultipleNHResponse {
-    //     let mut dedup_id = id.clone();
-    //     dedup_id.sort();
-    //     dedup_id.dedup();
+    pub async fn multiple(&self, id: Vec<u32>) -> MultipleNHResponse {
+        let mut dedup_id = id.clone();
+        dedup_id.sort();
+        dedup_id.dedup();
 
-    //     if dedup_id.len() != id.len() {
-    //         return MultipleNHResponse {
-    //             success: false,
-    //             error: Some("Ids have to be unique"),
-    //             data: vec![],
-    //         };
-    //     }
+        if dedup_id.len() != id.len() {
+            return MultipleNHResponse {
+                success: false,
+                error: Some("Ids have to be unique"),
+                data: vec![],
+            };
+        }
 
-    //     if id.len() > 25 {
-    //         return MultipleNHResponse {
-    //             success: false,
-    //             error: Some("Ids is limit to 25 per request"),
-    //             data: vec![]
-    //         }
-    //     }
+        if id.len() > 25 {
+            return MultipleNHResponse {
+                success: false,
+                error: Some("Ids is limit to 25 per request"),
+                data: vec![]
+            }
+        }
 
-    //     MultipleNHResponse {
-    //         success: true,
-    //         error: None,
-    //         data: get_multiple_nhql(id).await
-    //     }
-    // }
+        MultipleNHResponse {
+            success: true,
+            error: None,
+            data: get_multiple_nhql(id).await
+        }
+    }
 
     pub async fn search(
         &self, 

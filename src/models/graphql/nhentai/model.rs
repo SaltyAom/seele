@@ -3,7 +3,7 @@ use serde_aux::prelude::*;
 
 use async_graphql::*;
 
-use crate::models::graphql::nhql::model::NhqlCommentOrder;
+use crate::models::graphql::nhql::model::{NhqlCommentOrder, NhqlChannel};
 
 use super::service::{ get_comment_range, get_related };
 
@@ -23,7 +23,23 @@ pub struct NHentai {
     pub upload_date: Option<u32>,
     pub tags: NHentaiTags,
     pub num_pages: Option<u16>,
-    pub num_favorites: Option<u32>
+    pub num_favorites: Option<u32>,
+    pub channel: NhqlChannel
+}
+
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
+pub struct InternalNHentai {
+    #[serde(deserialize_with = "deserialize_option_number_from_string")]
+    pub id: Option<u32>,
+    #[serde(deserialize_with = "deserialize_option_number_from_string")]
+    pub media_id: Option<u32>,
+    pub title: NHentaiTitle,
+    pub images: NHentaiImages,
+    pub scanlator: Option<String>,
+    pub upload_date: Option<u32>,
+    pub tags: NHentaiTags,
+    pub num_pages: Option<u16>,
+    pub num_favorites: Option<u32>,
 }
 
 #[derive(Serialize, Deserialize, Clone, SimpleObject)]
@@ -50,7 +66,7 @@ impl NHentai {
         batch_by: Option<u32>,
         order_by: Option<NhqlCommentOrder>
     ) -> Vec<NHentaiComment> {
-        get_comment_range(self.id.unwrap(), from, to, batch, batch_by ,order_by).await
+        get_comment_range(self.id.unwrap(), from, to, batch, batch_by ,order_by, self.channel).await
     }
 
     pub async fn related(

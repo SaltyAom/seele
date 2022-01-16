@@ -4,7 +4,7 @@ use crate::models::graphql::nhql::model::NhqlChannel;
 
 use super::{
     model::{
-        // MultipleNHentaiResponse, 
+        MultipleNHentaiResponse, 
         NHentai, 
         NHentaiGroup
     },
@@ -39,39 +39,38 @@ impl NHentaiQuery {
         id: u32, 
         #[graphql(default_with = "default_channel()")] channel: NhqlChannel
     ) -> NHentai {
-        get_nhentai_by_id(id, channel as u8).await
+        get_nhentai_by_id(id, channel).await
     }
 
-    // ? Disabled due to nHentai NGINX rate limit
-    // pub async fn multiple(&self, id: Vec<u32>) -> MultipleNHentaiResponse {
-    //     let mut dedup_id = id.clone();
-    //     dedup_id.sort();
-    //     dedup_id.dedup();
+    pub async fn multiple(&self, id: Vec<u32>) -> MultipleNHentaiResponse {
+        let mut dedup_id = id.clone();
+        dedup_id.sort();
+        dedup_id.dedup();
 
-    //     if dedup_id.len() != id.len() {
-    //         return MultipleNHentaiResponse {
-    //             success: false,
-    //             error: Some("Ids have to be unique"),
-    //             data: vec![],
-    //         };
-    //     }
+        if dedup_id.len() != id.len() {
+            return MultipleNHentaiResponse {
+                success: false,
+                error: Some("Ids have to be unique"),
+                data: vec![],
+            };
+        }
 
-    //     if id.len() > 25 {
-    //         return MultipleNHentaiResponse {
-    //             success: false,
-    //             error: Some("Ids is limit to 25 per request"),
-    //             data: vec![],
-    //         };
-    //     }
+        if id.len() > 25 {
+            return MultipleNHentaiResponse {
+                success: false,
+                error: Some("Ids is limit to 25 per request"),
+                data: vec![],
+            };
+        }
 
-    //     let hentais = get_nhentais_by_id(id).await;
+        let hentais = get_nhentais_by_id(id).await;
 
-    //     MultipleNHentaiResponse {
-    //         success: true,
-    //         error: None,
-    //         data: hentais,
-    //     }
-    // }
+        MultipleNHentaiResponse {
+            success: true,
+            error: None,
+            data: hentais,
+        }
+    }
 
     pub async fn search(
         &self,

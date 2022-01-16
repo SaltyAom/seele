@@ -10,7 +10,7 @@ use cached::proc_macro::cached;
 use futures::{stream, StreamExt};
 use tokio::time::{sleep, Duration};
 
-const PARALLEL_REQUESTS: usize = 9;
+const PARALLEL_REQUESTS: usize = 6;
 
 pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
     let limit = id.len();
@@ -20,7 +20,7 @@ pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
         .map(|id| {
             tokio::spawn(async move {
                 sleep(Duration::from_millis(100)).await;
-                get_nhentai_by_id(id, NhqlChannel::Hifumin as u8).await
+                get_nhentai_by_id(id, NhqlChannel::Hifumin).await
             })
         })
         .buffered(PARALLEL_REQUESTS);
@@ -38,7 +38,7 @@ pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
     while let Some(nhentai) = rx.recv().await {
         hentais.push(nhentai);
 
-        if hentais.len() >= limit - 1 {
+        if hentais.len() >= limit {
             break
         }
     }
@@ -47,17 +47,39 @@ pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
 }
 
 #[cached]
-pub async fn get_nhentai_by_id(id: u32, channel: u8) -> NHentai {
+pub async fn internal_get_nhentai_by_id(id: u32, channel: u8) -> Option<InternalNHentai> {
     let endpoint = match channel {
         0 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
         1 => format!("https://nhentai.net/api/gallery/{}", id),
         _ => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
     };
 
-    if let Ok(nhentai) = get::<NHentai>(endpoint).await {
-        nhentai
+    if let Ok(nhentai) = get::<InternalNHentai>(endpoint).await {
+        Some(nhentai)
     } else {
-        EMPTY_NHENTAI_DATA
+        None
+    }
+}
+
+pub async fn get_nhentai_by_id(id: u32, channel: NhqlChannel) -> NHentai {
+    if let Some(nhentai) = internal_get_nhentai_by_id(id, channel as u8).await {
+        NHentai {
+            id: Some(id),
+            title: nhentai.title,
+            media_id: nhentai.media_id,
+            images: nhentai.images,
+            scanlator: nhentai.scanlator,
+            upload_date: nhentai.upload_date,
+            tags: nhentai.tags,
+            num_pages: nhentai.num_pages,
+            num_favorites: nhentai.num_favorites,
+            channel: channel,
+        }
+    } else {
+        match channel {
+            NhqlChannel::Hifumin => EMPTY_NHENTAI_HIFUMIN_DATA,
+            _ => EMPTY_NHENTAI_DATA
+        }
     }
 }
 
@@ -104,11 +126,14 @@ pub async fn search_nhentai(
 }
 
 #[cached]
-pub async fn get_comment(id: u32) -> Vec<NHentaiComment> {
-    let response =
-        get::<Vec<NHentaiComment>>(format!("https://nhentai.net/api/gallery/{}/comments", id));
+pub async fn get_comment(id: u32, channel: u8) -> Vec<NHentaiComment> {
+    let endpoint = match channel {
+        0 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
+        1 => format!("https://nhentai.net/api/gallery/{}/comments", id),
+        _ => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
+    };
 
-    if let Ok(comments) = response.await {
+    if let Ok(comments) = get::<Vec<NHentaiComment>>(endpoint).await {
         comments
     } else {
         vec![]
@@ -122,8 +147,9 @@ pub async fn get_comment_range(
     batch: Option<u32>,
     batch_by: Option<u32>,
     order_by: Option<NhqlCommentOrder>,
+    channel: NhqlChannel
 ) -> Vec<NHentaiComment> {
-    let mut comments = get_comment(id).await;
+    let mut comments = get_comment(id, channel as u8).await;
 
     if order_by.unwrap_or(NhqlCommentOrder::Newest) == NhqlCommentOrder::Oldest {
         comments.sort_by(|a, b| a.post_date.cmp(&b.post_date));

@@ -1,6 +1,6 @@
 use async_graphql::{ SimpleObject, ComplexObject, Enum };
 
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use super::{
     service::{ get_nhql_comment, get_nhql_related },
     super::nhentai::service::get_comment
@@ -15,7 +15,7 @@ pub enum NhqlCommentOrder {
 }
 
 /// Specified source origin
-#[derive(Enum, Copy, Clone, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Enum, Copy, Clone, Eq, PartialEq)]
 pub enum NhqlChannel {
     /// Hifumin mirror, updates every 12 hours with no rate limit
     /// You will want to use this if data loss is not toleratable.
@@ -74,12 +74,13 @@ impl Nhql {
             to, 
             batch,
             batch_by, 
-            order_by
+            order_by,
+            self.info.channel
         ).await;
 
         NhqlCommentResponse {
             // From cache
-            total: get_comment(self.id).await.len(),
+            total: get_comment(self.id, self.info.channel as u8).await.len(),
             data: comments
         }
     }
@@ -122,7 +123,8 @@ pub struct NhqlInfo {
     pub amount: u32,
     pub favorite: u32,
     pub upload: u32,
-    pub media_id: u32
+    pub media_id: u32,
+    pub channel: NhqlChannel
 }
 
 #[derive(Serialize, Clone, SimpleObject)]
