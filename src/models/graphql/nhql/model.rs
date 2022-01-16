@@ -1,4 +1,4 @@
-use async_graphql::{ SimpleObject, ComplexObject };
+use async_graphql::{ SimpleObject, ComplexObject, Enum };
 
 use serde::Serialize;
 use super::{
@@ -6,14 +6,25 @@ use super::{
     super::nhentai::service::get_comment
 };
 
-use async_graphql::Enum;
-
 #[derive(Enum, Copy, Clone, Eq, PartialEq)]
 pub enum NhqlCommentOrder {
     /// Order by comment date by descending order. (default)
     Newest,
     /// Order by comment date by ascending order
     Oldest
+}
+
+/// Specified source origin
+#[derive(Enum, Copy, Clone, Eq, PartialEq)]
+pub enum NhqlChannel {
+    /// Hifumin mirror, updates every 12 hours with no rate limit
+    /// You will want to use this if data loss is not toleratable.
+    /// Most of the time you will want to use this
+    /// (Default)
+    Hifumin = 0,
+    /// Use direct NHentai API, with rate limit and possibly maintain only 7 concurrent connections
+    /// You will want to use this fresh new data is important but data loss is not toleratable
+    Nhentai = 1
 }
 
 #[derive(Serialize, Clone, SimpleObject)]

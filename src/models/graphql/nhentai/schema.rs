@@ -1,5 +1,7 @@
 use async_graphql::Object;
 
+use crate::models::graphql::nhql::model::NhqlChannel;
+
 use super::{
     model::{
         // MultipleNHentaiResponse, 
@@ -26,10 +28,18 @@ fn empty_vec() -> Vec<String> {
     vec![]
 }
 
+fn default_channel() -> NhqlChannel {
+    NhqlChannel::Hifumin
+}
+
 #[Object]
 impl NHentaiQuery {
-    pub async fn by(&self, id: u32) -> NHentai {
-        get_nhentai_by_id(id).await
+    pub async fn by(
+        &self, 
+        id: u32, 
+        #[graphql(default_with = "default_channel()")] channel: NhqlChannel
+    ) -> NHentai {
+        get_nhentai_by_id(id, channel as u8).await
     }
 
     // ? Disabled due to nHentai NGINX rate limit

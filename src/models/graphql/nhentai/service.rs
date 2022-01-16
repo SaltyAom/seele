@@ -1,58 +1,60 @@
 use super::{
     constant::*, 
     model::*, 
-    super::nhql::model::NhqlCommentOrder
+    super::nhql::model::{ NhqlCommentOrder, NhqlChannel }
 };
-use crate::services::request::get;
+use crate::{services::request::get};
 
 use cached::proc_macro::cached;
 
-// use futures::{stream, StreamExt};
-// use tokio::time::{sleep, Duration};
+use futures::{stream, StreamExt};
+use tokio::time::{sleep, Duration};
 
-// const PARALLEL_REQUESTS: usize = 6;
+const PARALLEL_REQUESTS: usize = 9;
 
-// pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
-//     let limit = id.len();
-//     let (tx, mut rx) = tokio::sync::mpsc::channel::<NHentai>(limit);
+pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
+    let limit = id.len();
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<NHentai>(limit);
 
-//     let responses = stream::iter(id)
-//         .map(|id| {
-//             tokio::spawn(async move {
-//                 sleep(Duration::from_millis(100)).await;
-//                 get_nhentai_by_id(id).await
-//             })
-//         })
-//         .buffered(PARALLEL_REQUESTS);
+    let responses = stream::iter(id)
+        .map(|id| {
+            tokio::spawn(async move {
+                sleep(Duration::from_millis(100)).await;
+                get_nhentai_by_id(id, NhqlChannel::Hifumin as u8).await
+            })
+        })
+        .buffered(PARALLEL_REQUESTS);
 
-//     responses
-//         .for_each(|res| async {
-//             match tx.send(res.unwrap_or(EMPTY_NHENTAI_DATA)).await {
-//                 Ok(_a) => {},
-//                 Err(_e) => {}
-//             }
-//         })
-//         .await;
+    responses
+        .for_each(|res| async {
+            match tx.send(res.unwrap_or(EMPTY_NHENTAI_DATA)).await {
+                Ok(_a) => {},
+                Err(_e) => {}
+            }
+        })
+        .await;
 
-//     let mut hentais: Vec<NHentai> = vec![];
-//     while let Some(nhentai) = rx.recv().await {
-//         hentais.push(nhentai);
+    let mut hentais: Vec<NHentai> = vec![];
+    while let Some(nhentai) = rx.recv().await {
+        hentais.push(nhentai);
 
-//         if hentais.len() >= limit - 1 {
-//             break
-//         }
-//     }
+        if hentais.len() >= limit - 1 {
+            break
+        }
+    }
 
-//     hentais
-// }
+    hentais
+}
 
 #[cached]
-pub async fn get_nhentai_by_id(id: u32) -> NHentai {
-    let response = get::<NHentai>(
-        format!("https://nhentai.net/api/gallery/{}", id)
-    );
+pub async fn get_nhentai_by_id(id: u32, channel: u8) -> NHentai {
+    let endpoint = match channel {
+        0 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
+        1 => format!("https://nhentai.net/api/gallery/{}", id),
+        _ => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
+    };
 
-    if let Ok(nhentai) = response.await {
+    if let Ok(nhentai) = get::<NHentai>(endpoint).await {
         nhentai
     } else {
         EMPTY_NHENTAI_DATA
@@ -66,7 +68,7 @@ pub async fn search_nhentai(
     includes: Vec<String>,
     excludes: Vec<String>,
     tags: Vec<String>,
-    artists: Vec<String>,
+    artists: Vec<String>
 ) -> NHentaiGroup {
     let mut query = search + " ";
 

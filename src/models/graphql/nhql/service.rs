@@ -33,8 +33,8 @@ use super::{
 //         .collect::<Vec<NHResponse>>()
 // }
 
-pub async fn get_nhql(id: u32) -> NHResponse {
-    let nhentai = get_nhentai_by_id(id).await;
+pub async fn get_nhql(id: u32, channel: NhqlChannel) -> NHResponse {
+    let nhentai = get_nhentai_by_id(id, channel as u8).await;
 
     if nhentai.id.is_none() {
         return NHResponse {

@@ -5,6 +5,7 @@ use super::{
     model::{
         NHResponse, 
         NHSearchResponse, 
+        NhqlChannel
         // MultipleNHResponse
     },
 };
@@ -23,13 +24,21 @@ fn empty_vec() -> Vec<String> {
     vec![]
 }
 
+fn default_channel() -> NhqlChannel {
+    NhqlChannel::Hifumin
+}
+
 #[derive(Default)]
 pub struct NhqlQuery;
 
 #[Object]
 impl NhqlQuery {
-    pub async fn by(&self, id: u32) -> NHResponse {
-        get_nhql(id).await
+    pub async fn by(
+        &self, 
+        id: u32,
+        #[graphql(default_with = "default_channel()")] channel: NhqlChannel
+    ) -> NHResponse {
+        get_nhql(id, channel).await
     }
 
     // ? Disabled due to nHentai NGINX rate limit
