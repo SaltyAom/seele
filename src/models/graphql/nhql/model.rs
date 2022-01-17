@@ -19,7 +19,7 @@ pub enum NhqlCommentOrder {
 pub enum NhqlChannel {
     /// Strategy: Hifumin first then fallback to nHentai.
     /// (DEFAULT)
-    HifumiFirst = 0,
+    HifuminFirst = 0,
     /// Hifumin mirror, updates every 12 hours with no rate limit
     /// Best if data loss is not toleratable.
     Hifumin = 1,
