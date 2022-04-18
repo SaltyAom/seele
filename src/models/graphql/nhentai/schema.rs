@@ -3,11 +3,7 @@ use async_graphql::Object;
 use crate::models::graphql::nhql::model::NhqlChannel;
 
 use super::{
-    model::{
-        MultipleNHentaiResponse, 
-        NHentai, 
-        NHentaiGroup
-    },
+    model::{MultipleNHentaiResponse, NHentai, NHentaiGroup},
     service::*,
 };
 
@@ -33,15 +29,24 @@ fn default_channel() -> NhqlChannel {
 }
 
 #[Object]
+/// nHentai Query
+/// 
+/// Same format as nHentai API
 impl NHentaiQuery {
+    /// Get nHentai by ID (6 digits code)
     pub async fn by(
-        &self, 
-        id: u32, 
-        #[graphql(default_with = "default_channel()")] channel: NhqlChannel
+        &self,
+        id: u32,
+        #[graphql(default_with = "default_channel()")] channel: NhqlChannel,
     ) -> NHentai {
         get_nhentai_by_id(id, channel).await
     }
 
+    /// Get multiple nHentai by ID (6 digits code)
+    /// 
+    /// - IDs must be unique
+    /// - Maximum 25 IDs per batch
+    /// - Only available for HifuminFirst channel
     pub async fn multiple(&self, id: Vec<u32>) -> MultipleNHentaiResponse {
         let mut dedup_id = id.clone();
         dedup_id.sort();
@@ -72,6 +77,7 @@ impl NHentaiQuery {
         }
     }
 
+    /// Search from nHentai
     pub async fn search(
         &self,
         #[graphql(default = "")] with: String,

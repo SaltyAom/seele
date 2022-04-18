@@ -32,7 +32,11 @@ fn default_channel() -> NhqlChannel {
 pub struct NhqlQuery;
 
 #[Object]
+/// Nhql (nHentai API)
+/// 
+/// Easier formatted data, ready to used out of the box
 impl NhqlQuery {
+    /// Get nHentai by ID (6 digits code)
     pub async fn by(
         &self, 
         id: u32,
@@ -41,6 +45,11 @@ impl NhqlQuery {
         get_nhql(id, channel).await
     }
 
+    /// Get multiple nHentai by ID (6 digits code)
+    /// 
+    /// - IDs must be unique
+    /// - Maximum 25 IDs per batch
+    /// - Only available for HifuminFirst channel
     pub async fn multiple(&self, id: Vec<u32>) -> MultipleNHResponse {
         let mut dedup_id = id.clone();
         dedup_id.sort();
@@ -69,6 +78,7 @@ impl NhqlQuery {
         }
     }
 
+    /// Search from nHentai
     pub async fn search(
         &self, 
         #[graphql(default = "")] with: String,
