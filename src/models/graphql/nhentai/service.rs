@@ -5,12 +5,12 @@ use super::{
 };
 use crate::{services::request::get};
 
-use cached::proc_macro::cached;
+use cached::{ proc_macro::cached, SizedCache, TimedCache };
 
 use futures::{stream, StreamExt};
 use tokio::time::{sleep, Duration};
 
-const PARALLEL_REQUESTS: usize = 25;
+const PARALLEL_REQUESTS: usize = 13;
 
 pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
     let limit = id.len();
@@ -46,8 +46,17 @@ pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
     hentais
 }
 
-#[cached]
+#[cached(
+    type = "TimedCache<u32, Option<InternalNHentai>>",
+    create = "{ TimedCache::with_lifespan(45) }",
+    convert = r#"{ id }"#
+)]
 pub async fn internal_get_nhentai_by_id(id: u32, channel: u8) -> Option<InternalNHentai> {
+    // ? It would take a very long time until nhentai get more id than 1M
+    if id > 750_000 {
+        return None
+    }
+
     let endpoint = match channel {
         0 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
         1 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
@@ -58,7 +67,7 @@ pub async fn internal_get_nhentai_by_id(id: u32, channel: u8) -> Option<Internal
     if let Ok(nhentai) = get::<InternalNHentai>(endpoint).await {
         return Some(nhentai)
     }
-     
+
     if channel != 0 {
         return None
     }
@@ -94,7 +103,11 @@ pub async fn get_nhentai_by_id(id: u32, channel: NhqlChannel) -> NHentai {
     }
 }
 
-#[cached]
+#[cached(
+    type = "TimedCache<String, NHentaiGroup>",
+    create = "{ TimedCache::with_lifespan(45) }",
+    convert = r#"{ format!("{}{}{}{}{}{}", search, page, includes.join(""), excludes.join(""), tags.join(""), artists.join("") ) }"#
+)]
 pub async fn search_nhentai(
     search: String,
     page: u16,
@@ -151,8 +164,17 @@ pub async fn search_nhentai(
     }
 }
 
-#[cached]
+#[cached(
+    type = "TimedCache<u32, Vec<NHentaiComment>>",
+    create = "{ TimedCache::with_lifespan(45) }",
+    convert = r#"{ id }"#
+)]
 pub async fn get_comment(id: u32, channel: u8) -> Vec<NHentaiComment> {
+    // ? It would take a very long time until nhentai get more id than 1M
+    if id > 750_000 {
+        return vec![]
+    }
+
     let endpoint = match channel {
         0 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
         1 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
@@ -229,8 +251,17 @@ pub async fn get_comment_range(
     result
 }
 
-#[cached]
+#[cached(
+    type = "TimedCache<u32, Vec<NHentai>>",
+    create = "{ TimedCache::with_lifespan(45) }",
+    convert = r#"{ id }"#
+)]
 pub async fn get_related(id: u32) -> Vec<NHentai> {
+    // ? It would take a very long time until nhentai get more id than 1M
+    if id > 750_000 {
+        return vec![]
+    }
+
     let response = get::<NHentaiRelated>(format!("https://nhentai.net/api/gallery/{}/related", id));
 
     if let Ok(related) = response.await {
