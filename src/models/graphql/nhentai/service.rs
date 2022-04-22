@@ -5,7 +5,7 @@ use super::{
 };
 use crate::{services::request::get};
 
-use cached::{ proc_macro::cached, SizedCache, TimedCache };
+use cached::{ proc_macro::cached, TimedCache };
 
 use futures::{stream, StreamExt};
 use tokio::time::{sleep, Duration};
