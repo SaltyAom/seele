@@ -10,7 +10,7 @@ use cached::{ proc_macro::cached, TimedCache };
 use futures::{stream, StreamExt};
 use tokio::time::{sleep, Duration};
 
-const PARALLEL_REQUESTS: usize = 13;
+const PARALLEL_REQUESTS: usize = 25;
 
 pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
     let limit = id.len();
