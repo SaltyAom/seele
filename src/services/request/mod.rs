@@ -1,14 +1,20 @@
 use serde::de::DeserializeOwned;
 
+lazy_static! {
+    static ref CLIENT: reqwest::Client = reqwest::Client::new();
+}
+
 pub async fn just_get(url: String) -> Result<String, reqwest::Error> {
-    Ok(
-        reqwest::get(
-            &url
-        )
-            .await?
+    let res = CLIENT.get(&url)
+        .send()
+        .await;
+
+    match res {
+        Ok(res) => res
             .text()
-            .await?
-    )
+            .await,
+        Err(err) => Err(err)
+    }
 }
 
 pub async fn deserialize<'a, T>(response: String) -> anyhow::Result<T> where T: DeserializeOwned + Clone {

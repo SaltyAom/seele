@@ -12,6 +12,18 @@ pub async fn graphql_executor(
     schema.execute(request.into_inner()).await.into()
 }
 
+#[get("/")]
+pub async fn landing() -> Result<HttpResponse> {
+    Ok(
+        HttpResponse::Ok()
+            .content_type("text/html; charset=utf-8")
+            .body(playground_source(
+                GraphQLPlaygroundConfig::new("/v1/graphql"),
+            )
+        )
+    )
+}
+
 #[get("/graphql")]
 pub async fn playground() -> Result<HttpResponse> {
     Ok(
@@ -46,6 +58,7 @@ pub async fn v1_playground() -> Result<HttpResponse> {
 
 pub fn use_graphql(config: &mut ServiceConfig) {
     config
+        .service(landing)
         .service(graphql_executor)
         .service(playground)
         .service(v1_graphql_executor)
