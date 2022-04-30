@@ -30,4 +30,3 @@ anyhow = "1.0.52"
 tokio = { version = "1.18.0" }
 futures = "0.3.21"
 lazy_static = "1.4.0"
-cloudflare-bypasser = "0.2.0"
