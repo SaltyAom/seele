@@ -5,7 +5,27 @@ lazy_static! {
 }
 
 pub async fn just_get(url: String) -> Result<String, reqwest::Error> {
+    let mut bypasser = cloudflare_bypasser::Bypasser::default()
+        .retry(5)
+        .wait(5)
+        .random_user_agent(true);
+
+    // to pass the verify both of the cookie and user agent are needed
+    let (cookie, user_agent);
+    loop {
+        if let Ok((c, ua)) =  bypasser.bypass(&url) {
+            cookie = c;
+            user_agent = ua;
+            break;
+        }
+    }
+
+    let mut headers = reqwest::header::HeaderMap::new();
+    headers.insert(reqwest::header::COOKIE, cookie);
+    headers.insert(reqwest::header::USER_AGENT, user_agent);
+
     let res = CLIENT.get(&url)
+        .headers(headers)
         .send()
         .await;
 

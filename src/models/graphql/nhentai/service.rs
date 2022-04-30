@@ -48,7 +48,7 @@ pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
 
 #[cached(
     type = "TimedCache<u32, Option<InternalNHentai>>",
-    create = "{ TimedCache::with_lifespan(45) }",
+    create = "{ TimedCache::with_lifespan(3600 * 3) }",
     convert = r#"{ id }"#
 )]
 pub async fn internal_get_nhentai_by_id(id: u32, channel: u8) -> Option<InternalNHentai> {
@@ -105,7 +105,7 @@ pub async fn get_nhentai_by_id(id: u32, channel: NhqlChannel) -> NHentai {
 
 #[cached(
     type = "TimedCache<String, NHentaiGroup>",
-    create = "{ TimedCache::with_lifespan(45) }",
+    create = "{ TimedCache::with_lifespan(3 * 3600) }",
     convert = r#"{ format!("{}{}{}{}{}{}", search, page, includes.join(""), excludes.join(""), tags.join(""), artists.join("") ) }"#
 )]
 pub async fn search_nhentai(
@@ -166,7 +166,7 @@ pub async fn search_nhentai(
 
 #[cached(
     type = "TimedCache<u32, Vec<NHentaiComment>>",
-    create = "{ TimedCache::with_lifespan(45) }",
+    create = "{ TimedCache::with_lifespan(3 * 3600) }",
     convert = r#"{ id }"#
 )]
 pub async fn get_comment(id: u32, channel: u8) -> Vec<NHentaiComment> {
@@ -253,7 +253,7 @@ pub async fn get_comment_range(
 
 #[cached(
     type = "TimedCache<u32, Vec<NHentai>>",
-    create = "{ TimedCache::with_lifespan(45) }",
+    create = "{ TimedCache::with_lifespan(6 * 3600) }",
     convert = r#"{ id }"#
 )]
 pub async fn get_related(id: u32) -> Vec<NHentai> {
