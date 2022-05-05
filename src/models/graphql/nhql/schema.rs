@@ -20,14 +20,6 @@ impl NhqlQueryRoot {
     }
 }
 
-fn empty_vec() -> Vec<String> {
-    vec![]
-}
-
-fn default_channel() -> NhqlChannel {
-    NhqlChannel::HifuminFirst
-}
-
 #[derive(Default)]
 pub struct NhqlQuery;
 
@@ -40,7 +32,7 @@ impl NhqlQuery {
     pub async fn by(
         &self, 
         id: u32,
-        #[graphql(default_with = "default_channel()")] channel: NhqlChannel
+        #[graphql(default_with = "NhqlChannel::HifuminFirst")] channel: NhqlChannel
     ) -> NHResponse {
         get_nhql(id, channel).await
     }
@@ -83,11 +75,12 @@ impl NhqlQuery {
         &self, 
         #[graphql(default = "")] with: String,
         #[graphql(default = 1)] page: u16,
-        #[graphql(default_with = "empty_vec()")] includes: Vec<String>,
-        #[graphql(default_with = "empty_vec()")] excludes: Vec<String>,
-        #[graphql(default_with = "empty_vec()")] tags: Vec<String>,
-        #[graphql(default_with = "empty_vec()")] artists: Vec<String>
+        #[graphql(default_with = "vec![]")] includes: Vec<String>,
+        #[graphql(default_with = "vec![]")] excludes: Vec<String>,
+        #[graphql(default_with = "vec![]")] tags: Vec<String>,
+        #[graphql(default_with = "vec![]")] artists: Vec<String>,
+        #[graphql(default_with = "NhqlChannel::HifuminFirst")] channel: NhqlChannel
     ) -> NHSearchResponse {
-        search_nhql(with, page, includes, excludes, tags, artists).await
+        search_nhql(channel, with, page, includes, excludes, tags, artists).await
     }
 }

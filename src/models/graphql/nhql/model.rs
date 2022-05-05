@@ -81,7 +81,7 @@ impl Nhql {
 
         NhqlCommentResponse {
             // From cache
-            total: get_comment(self.id, self.info.channel as u8).await.len(),
+            total: get_comment(self.id, self.info.channel).await.len(),
             data: comments
         }
     }

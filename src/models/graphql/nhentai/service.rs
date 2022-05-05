@@ -5,6 +5,7 @@ use super::{
 };
 use crate::{services::request::get};
 
+use async_graphql::InputType;
 use cached::{ proc_macro::cached, TimedCache };
 
 use futures::{stream, StreamExt};
@@ -47,28 +48,27 @@ pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
 }
 
 #[cached(
-    type = "TimedCache<u32, Option<InternalNHentai>>",
+    type = "TimedCache<String, Option<InternalNHentai>>",
     create = "{ TimedCache::with_lifespan(3600 * 3) }",
-    convert = r#"{ id }"#
+    convert = r#"{ format!("{}-{}", channel.to_value(), id) }"#
 )]
-pub async fn internal_get_nhentai_by_id(id: u32, channel: u8) -> Option<InternalNHentai> {
-    // ? It would take a very long time until nhentai get more id than 1M
-    if id > 750_000 {
+pub async fn internal_get_nhentai_by_id(id: u32, channel: NhqlChannel) -> Option<InternalNHentai> {
+    // ? It would take a very long time until nhentai get more id than 10M
+    if id > 10_000_000 {
         return None
     }
 
     let endpoint = match channel {
-        0 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
-        1 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
-        2 => format!("https://nhentai.net/api/gallery/{}", id),
-        _ => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
+        NhqlChannel::Hifumin => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
+        NhqlChannel::HifuminFirst => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
+        NhqlChannel::Nhentai => format!("https://nhentai.net/api/gallery/{}", id),
     };
 
     if let Ok(nhentai) = get::<InternalNHentai>(endpoint).await {
         return Some(nhentai)
     }
 
-    if channel != 0 {
+    if channel != NhqlChannel::Hifumin {
         return None
     }
 
@@ -82,7 +82,7 @@ pub async fn internal_get_nhentai_by_id(id: u32, channel: u8) -> Option<Internal
 }
 
 pub async fn get_nhentai_by_id(id: u32, channel: NhqlChannel) -> NHentai {
-    if let Some(nhentai) = internal_get_nhentai_by_id(id, channel as u8).await {
+    if let Some(nhentai) = internal_get_nhentai_by_id(id, channel).await {
         NHentai {
             id: Some(id),
             title: nhentai.title,
@@ -106,9 +106,10 @@ pub async fn get_nhentai_by_id(id: u32, channel: NhqlChannel) -> NHentai {
 #[cached(
     type = "TimedCache<String, NHentaiGroup>",
     create = "{ TimedCache::with_lifespan(3 * 3600) }",
-    convert = r#"{ format!("{}{}{}{}{}{}", search, page, includes.join(""), excludes.join(""), tags.join(""), artists.join("") ) }"#
+    convert = r#"{ format!("{}{}{}{}{}{}{}", channel.to_value(), search.to_lowercase(), page, includes.join(""), excludes.join(""), tags.join(""), artists.join("") ) }"#
 )]
 pub async fn search_nhentai(
+    channel: NhqlChannel,
     search: String,
     page: u16,
     includes: Vec<String>,
@@ -116,6 +117,37 @@ pub async fn search_nhentai(
     tags: Vec<String>,
     artists: Vec<String>
 ) -> NHentaiGroup {
+    if channel == NhqlChannel::Hifumin || channel == NhqlChannel::HifuminFirst {
+        let hentais = match get::<Vec<u32>>(
+            format!(
+                "https://search.hifumin.app/search/{}/{}",
+                search, page
+            )
+        ).await {
+            Ok(ids) => get_nhentais_by_id(ids).await ,
+            Err(_error) => vec![]
+        };
+
+        if channel != NhqlChannel::HifuminFirst && hentais.len() > 0 {
+            return NHentaiGroup {
+                num_pages: None,
+                per_page: Some(25),
+                result: hentais.into_iter().map(|hentai| NHentai {
+                    id: hentai.id,
+                    title: hentai.title,
+                    media_id: hentai.media_id,
+                    images: hentai.images,
+                    scanlator: hentai.scanlator,
+                    upload_date: hentai.upload_date,
+                    tags: hentai.tags,
+                    num_pages: hentai.num_pages,
+                    num_favorites: hentai.num_favorites,
+                    channel,
+                }).collect(),
+            }
+        }
+    }
+
     let mut query = search + " ";
 
     for tag in tags.into_iter() {
@@ -138,12 +170,12 @@ pub async fn search_nhentai(
         }
     }
 
-    let response = get::<InternalNHentaiGroup>(format!(
-        "https://nhentai.net/api/galleries/search?query={}&page={}",
-        query, page
-    ));
-
-    match response.await {
+    match get::<InternalNHentaiGroup>(
+        format!(
+            "https://nhentai.net/api/galleries/search?query={}&page={}",
+            query, page
+        )
+    ).await {
         Ok(nhentai) => NHentaiGroup {
             num_pages: nhentai.num_pages,
             per_page: nhentai.per_page,
@@ -157,36 +189,36 @@ pub async fn search_nhentai(
                 tags: hentai.tags,
                 num_pages: hentai.num_pages,
                 num_favorites: hentai.num_favorites,
-                channel: NhqlChannel::Nhentai,
+                channel,
             }).collect(),
         },
-        Err(_error) => EMPTY_NHENTAI_GROUP,
+        Err(_error) => EMPTY_NHENTAI_GROUP
     }
 }
 
+
 #[cached(
-    type = "TimedCache<u32, Vec<NHentaiComment>>",
+    type = "TimedCache<String, Vec<NHentaiComment>>",
     create = "{ TimedCache::with_lifespan(3 * 3600) }",
-    convert = r#"{ id }"#
+    convert = r#"{ format!("{}-{}", channel.to_value(), id) }"#
 )]
-pub async fn get_comment(id: u32, channel: u8) -> Vec<NHentaiComment> {
-    // ? It would take a very long time until nhentai get more id than 1M
-    if id > 750_000 {
+pub async fn get_comment(id: u32, channel: NhqlChannel) -> Vec<NHentaiComment> {
+    // ? It would take a very long time until nhentai get more id than 10M
+    if id > 10_000_000 {
         return vec![]
     }
 
     let endpoint = match channel {
-        0 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
-        1 => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
-        2 => format!("https://nhentai.net/api/gallery/{}/comments", id),
-        _ => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
+        NhqlChannel::Hifumin => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
+        NhqlChannel::HifuminFirst => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
+        NhqlChannel::Nhentai => format!("https://nhentai.net/api/gallery/{}/comments", id)
     };
 
     if let Ok(comments) = get::<Vec<NHentaiComment>>(endpoint).await {
         return comments
     }
 
-    if channel != 0 {
+    if channel != NhqlChannel::Hifumin {
         return vec![]
     }
 
@@ -208,7 +240,7 @@ pub async fn get_comment_range(
     order_by: Option<NhqlCommentOrder>,
     channel: NhqlChannel
 ) -> Vec<NHentaiComment> {
-    let mut comments = get_comment(id, channel as u8).await;
+    let mut comments = get_comment(id, channel).await;
 
     if order_by.unwrap_or(NhqlCommentOrder::Newest) == NhqlCommentOrder::Oldest {
         comments.sort_by(|a, b| a.post_date.cmp(&b.post_date));

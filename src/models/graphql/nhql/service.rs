@@ -52,6 +52,7 @@ pub async fn get_nhql(id: u32, channel: NhqlChannel) -> NHResponse {
 }
 
 pub async fn search_nhql(
+    channel: NhqlChannel,
     find: String,
     page: u16,
     includes: Vec<String>,
@@ -59,7 +60,7 @@ pub async fn search_nhql(
     tags: Vec<String>,
     artists: Vec<String>,
 ) -> NHSearchResponse {
-    let nhentais = search_nhentai(find, page, includes, excludes, tags, artists).await;
+    let nhentais = search_nhentai(channel, find, page, includes, excludes, tags, artists).await;
 
     if nhentais.result.len() == 0 {
         return NHSearchResponse {
