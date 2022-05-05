@@ -68,7 +68,7 @@ pub async fn internal_get_nhentai_by_id(id: u32, channel: NhqlChannel) -> Option
         return Some(nhentai)
     }
 
-    if channel != NhqlChannel::Hifumin {
+    if channel == NhqlChannel::Hifumin {
         return None
     }
 
@@ -128,7 +128,7 @@ pub async fn search_nhentai(
             Err(_error) => vec![]
         };
 
-        if channel != NhqlChannel::HifuminFirst && hentais.len() > 0 {
+        if channel == NhqlChannel::Hifumin && hentais.len() > 0 {
             return NHentaiGroup {
                 num_pages: None,
                 per_page: Some(25),
