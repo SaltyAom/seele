@@ -5,7 +5,7 @@ import bodyaccess;
 
 backend hifumin {
     .host = "127.0.0.1";
-    .port = "3001";
+    .port = "8080";
     .max_connections = 1500;
     .probe = {
         .url = "/";
