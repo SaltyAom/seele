@@ -27,6 +27,6 @@ reqwest = { version = "0.11.10", default-features = false, features = ["rustls-t
 cached = "0.34.0"
 anyhow = "1.0.52"
 
-tokio = { version = "1.18.0" }
+tokio = { version = "1.18.0", features = ["fs"] }
 futures = "0.3.21"
 lazy_static = "1.4.0"

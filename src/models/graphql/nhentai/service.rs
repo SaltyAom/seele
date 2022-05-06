@@ -9,7 +9,10 @@ use async_graphql::InputType;
 use cached::{ proc_macro::cached, TimedCache };
 
 use futures::{stream, StreamExt};
-use tokio::time::{sleep, Duration};
+use tokio::{
+    time::{sleep, Duration},
+    fs,
+};
 
 const PARALLEL_REQUESTS: usize = 25;
 
@@ -52,10 +55,21 @@ pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
     create = "{ TimedCache::with_lifespan(3600 * 3) }",
     convert = r#"{ format!("{}-{}", channel.to_value(), id) }"#
 )]
-pub async fn internal_get_nhentai_by_id(id: u32, channel: NhqlChannel) -> Option<InternalNHentai> {
+pub async fn internal_get_nhentai_by_id(id: u32, channel: NhqlChannel) -> Option<InternalNHentai> {   
     // ? It would take a very long time until nhentai get more id than 10M
     if id > 10_000_000 {
         return None
+    }
+
+    if channel == NhqlChannel::Hifumin || channel == NhqlChannel::HifuminFirst {
+        match fs::read_to_string(format!("data/{}.json", id)).await {
+            Ok(stringified_json) => {
+                if let Ok(json) = serde_json::from_str::<InternalNHentai>(&stringified_json) {
+                    return Some(json)
+                }
+            },
+            Err(_) => {}
+        }
     }
 
     let endpoint = match channel {

@@ -24,10 +24,22 @@ COPY . .
 RUN RUSTFLAGS='-C target-cpu=native' cargo install --target x86_64-unknown-linux-musl --path .
 
 # * --- Running Stage ---
-FROM scratch
+FROM alpine:3.15 as main
+
+WORKDIR /usr/app
+
+RUN apk --no-cache add nodejs varnish nginx
 
 COPY --from=builder /usr/local/cargo/bin/akashic app
 
-EXPOSE 8080
+COPY ./ops/varnish /etc/default/varnish
+COPY ./ops/default.vcl /etc/varnish/default.vcl
+COPY ./ops/default.conf /etc/nginx/conf.d/default.conf
+COPY ./ops/start.sh .
+COPY data data
+
+RUN chmod 777 start.sh
+
+EXPOSE 3000
 
 CMD ["./app"]
