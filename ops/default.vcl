@@ -16,7 +16,7 @@ backend hifumin {
 }
 
 
-sub sub vcl_recv {
+sub vcl_recv {
     unset req.http.X-Body-Len;
 
     if (req.method == "POST") {

@@ -8,4 +8,4 @@ varnishd \
 
 nginx -c /etc/nginx/conf.d/default.conf
 
-node build
+./akashic
