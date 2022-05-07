@@ -2,6 +2,7 @@ vcl 4.1;
 
 import std;
 import bodyaccess;
+import stale;
 
 backend hifumin {
     .host = "127.0.0.1";
@@ -9,6 +10,8 @@ backend hifumin {
     .max_connections = 1500;
     .probe = {
         .url = "/";
+        .interval = 1s;
+        .timeout = 3s;
     }
     .connect_timeout        = 30s;
     .first_byte_timeout     = 30s;
@@ -47,4 +50,27 @@ sub vcl_backend_fetch {
 
 sub vcl_backend_response {
     set beresp.ttl = 1d;
+
+    set beresp.grace = 30s;
+    set beresp.keep = 30s;
+
+    set beresp.stale_while_revalidate = 30s;
+    set beresp.stale_if_error = 30s;
+}
+
+sub stale_if_error {
+    if (beresp.status >= 500 && stale.exists()) {
+        # Tune this value to match your traffic and caching patterns
+        stale.revive(1s, 10m);
+        stale.deliver();
+        return (abandon);
+    }
+}
+
+sub vcl_backend_response {
+    call stale_if_error;
+}
+
+sub vcl_backend_error {
+    call stale_if_error;
 }
