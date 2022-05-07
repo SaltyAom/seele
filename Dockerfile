@@ -34,4 +34,4 @@ COPY data data
 
 EXPOSE 8080
 
-CMD ["./start.sh"]
+CMD ["./akashic"]
