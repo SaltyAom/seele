@@ -20,9 +20,7 @@ pub async fn deserialize<'a, T>(response: String) -> anyhow::Result<T> where T: 
 }
 
 pub async fn get<'a, T>(url: String) -> anyhow::Result<T> where T: DeserializeOwned + Clone {
-    let response = just_get(url.to_owned()).await?;
-
-    deserialize::<T>(response).await
+    deserialize::<T>(just_get(url.to_owned()).await?).await
 }
 
 // pub async fn parse_get<'a, T>(url: String, middleware: &dyn Fn(String) -> String) -> Result<T, reqwest::Error> where T: DeserializeOwned + Clone {

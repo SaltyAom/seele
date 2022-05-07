@@ -128,17 +128,15 @@ pub async fn search_nhentai(
     artists: Vec<String>,
 ) -> NHentaiGroup {
     if channel == NhqlChannel::Hifumin || channel == NhqlChannel::HifuminFirst {
-        let hentais = match get::<Vec<u32>>(format!(
-            "https://search.hifumin.app/search/{}/{}",
-            search, page
-        ))
-        .await
-        {
+        let hentais = match get::<Vec<u32>>(
+            format!("https://search.hifumin.app/search/{}/{}", search, page)
+        )
+        .await {
             Ok(ids) => get_nhentais_by_id(ids).await,
-            Err(_error) => vec![],
+            Err(_error) => vec![]
         };
 
-        if channel == NhqlChannel::Hifumin && hentais.len() > 0 {
+        if channel == NhqlChannel::HifuminFirst || (channel == NhqlChannel::Hifumin && hentais.len() > 0) {
             return NHentaiGroup {
                 num_pages: None,
                 per_page: Some(25),
@@ -183,12 +181,9 @@ pub async fn search_nhentai(
         }
     }
 
-    match get::<InternalNHentaiGroup>(format!(
-        "https://nhentai.net/api/galleries/search?query={}&page={}",
-        query, page
-    ))
-    .await
-    {
+    match get::<InternalNHentaiGroup>(
+        format!("https://nhentai.net/api/galleries/search?query={}&page={}", query, page)
+    ).await {
         Ok(nhentai) => NHentaiGroup {
             num_pages: nhentai.num_pages,
             per_page: nhentai.per_page,
