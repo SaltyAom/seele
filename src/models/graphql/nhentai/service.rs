@@ -1,18 +1,15 @@
 use super::{
-    constant::*, 
-    model::*, 
-    super::nhql::model::{ NhqlCommentOrder, NhqlChannel }
+    super::nhql::model::{NhqlChannel, NhqlCommentOrder},
+    constant::*,
+    model::*,
 };
-use crate::{services::request::get};
+use crate::services::request::get;
 
 use async_graphql::InputType;
-use cached::{ proc_macro::cached, TimedCache };
+use cached::{proc_macro::cached, TimedCache};
 
 use futures::{stream, StreamExt};
-use tokio::{
-    time::{sleep, Duration},
-    fs,
-};
+use tokio::fs;
 
 const PARALLEL_REQUESTS: usize = 25;
 
@@ -20,19 +17,12 @@ pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
     let limit = id.len();
     let (tx, mut rx) = tokio::sync::mpsc::channel::<NHentai>(limit);
 
-    let responses = stream::iter(id)
-        .map(|id| {
-            tokio::spawn(async move {
-                sleep(Duration::from_millis(100)).await;
-                get_nhentai_by_id(id, NhqlChannel::Hifumin).await
-            })
-        })
-        .buffered(PARALLEL_REQUESTS);
-
-    responses
+    stream::iter(id)
+        .map(|id| tokio::spawn(async move { get_nhentai_by_id(id, NhqlChannel::Hifumin).await }))
+        .buffered(PARALLEL_REQUESTS)
         .for_each(|res| async {
             match tx.send(res.unwrap_or(EMPTY_NHENTAI_DATA)).await {
-                Ok(_a) => {},
+                Ok(_a) => {}
                 Err(_e) => {}
             }
         })
@@ -43,7 +33,7 @@ pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
         hentais.push(nhentai);
 
         if hentais.len() >= limit {
-            break
+            break;
         }
     }
 
@@ -55,41 +45,47 @@ pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
     create = "{ TimedCache::with_lifespan(3600 * 3) }",
     convert = r#"{ format!("{}-{}", channel.to_value(), id) }"#
 )]
-pub async fn internal_get_nhentai_by_id(id: u32, channel: NhqlChannel) -> Option<InternalNHentai> {   
+pub async fn internal_get_nhentai_by_id(id: u32, channel: NhqlChannel) -> Option<InternalNHentai> {
     // ? It would take a very long time until nhentai get more id than 10M
     if id > 10_000_000 {
-        return None
+        return None;
     }
 
     if channel == NhqlChannel::Hifumin || channel == NhqlChannel::HifuminFirst {
         match fs::read_to_string(format!("data/{}.json", id)).await {
             Ok(stringified_json) => {
                 if let Ok(json) = serde_json::from_str::<InternalNHentai>(&stringified_json) {
-                    return Some(json)
+                    return Some(json);
                 }
-            },
+            }
             Err(_) => {}
         }
     }
 
     let endpoint = match channel {
-        NhqlChannel::Hifumin => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
-        NhqlChannel::HifuminFirst => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json", id),
+        NhqlChannel::Hifumin => format!(
+            "https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json",
+            id
+        ),
+        NhqlChannel::HifuminFirst => format!(
+            "https://raw.githubusercontent.com/saltyaom-engine/hifumin-mirror/generated/{}.json",
+            id
+        ),
         NhqlChannel::Nhentai => format!("https://nhentai.net/api/gallery/{}", id),
     };
 
     if let Ok(nhentai) = get::<InternalNHentai>(endpoint).await {
-        return Some(nhentai)
+        return Some(nhentai);
     }
 
     if channel == NhqlChannel::Hifumin {
-        return None
+        return None;
     }
 
-    if let Ok(nhentai) = get::<InternalNHentai>(
-        format!("https://nhentai.net/api/gallery/{}", id
-    )).await {
-        return Some(nhentai)
+    if let Ok(nhentai) =
+        get::<InternalNHentai>(format!("https://nhentai.net/api/gallery/{}", id)).await
+    {
+        return Some(nhentai);
     }
 
     None
@@ -112,7 +108,7 @@ pub async fn get_nhentai_by_id(id: u32, channel: NhqlChannel) -> NHentai {
     } else {
         match channel {
             NhqlChannel::Hifumin => EMPTY_NHENTAI_HIFUMIN_DATA,
-            _ => EMPTY_NHENTAI_DATA
+            _ => EMPTY_NHENTAI_DATA,
         }
     }
 }
@@ -129,36 +125,39 @@ pub async fn search_nhentai(
     includes: Vec<String>,
     excludes: Vec<String>,
     tags: Vec<String>,
-    artists: Vec<String>
+    artists: Vec<String>,
 ) -> NHentaiGroup {
     if channel == NhqlChannel::Hifumin || channel == NhqlChannel::HifuminFirst {
-        let hentais = match get::<Vec<u32>>(
-            format!(
-                "https://search.hifumin.app/search/{}/{}",
-                search, page
-            )
-        ).await {
-            Ok(ids) => get_nhentais_by_id(ids).await ,
-            Err(_error) => vec![]
+        let hentais = match get::<Vec<u32>>(format!(
+            "https://search.hifumin.app/search/{}/{}",
+            search, page
+        ))
+        .await
+        {
+            Ok(ids) => get_nhentais_by_id(ids).await,
+            Err(_error) => vec![],
         };
 
         if channel == NhqlChannel::Hifumin && hentais.len() > 0 {
             return NHentaiGroup {
                 num_pages: None,
                 per_page: Some(25),
-                result: hentais.into_iter().map(|hentai| NHentai {
-                    id: hentai.id,
-                    title: hentai.title,
-                    media_id: hentai.media_id,
-                    images: hentai.images,
-                    scanlator: hentai.scanlator,
-                    upload_date: hentai.upload_date,
-                    tags: hentai.tags,
-                    num_pages: hentai.num_pages,
-                    num_favorites: hentai.num_favorites,
-                    channel,
-                }).collect(),
-            }
+                result: hentais
+                    .into_iter()
+                    .map(|hentai| NHentai {
+                        id: hentai.id,
+                        title: hentai.title,
+                        media_id: hentai.media_id,
+                        images: hentai.images,
+                        scanlator: hentai.scanlator,
+                        upload_date: hentai.upload_date,
+                        tags: hentai.tags,
+                        num_pages: hentai.num_pages,
+                        num_favorites: hentai.num_favorites,
+                        channel,
+                    })
+                    .collect(),
+            };
         }
     }
 
@@ -184,32 +183,35 @@ pub async fn search_nhentai(
         }
     }
 
-    match get::<InternalNHentaiGroup>(
-        format!(
-            "https://nhentai.net/api/galleries/search?query={}&page={}",
-            query, page
-        )
-    ).await {
+    match get::<InternalNHentaiGroup>(format!(
+        "https://nhentai.net/api/galleries/search?query={}&page={}",
+        query, page
+    ))
+    .await
+    {
         Ok(nhentai) => NHentaiGroup {
             num_pages: nhentai.num_pages,
             per_page: nhentai.per_page,
-            result: nhentai.result.into_iter().map(|hentai| NHentai {
-                id: hentai.id,
-                title: hentai.title,
-                media_id: hentai.media_id,
-                images: hentai.images,
-                scanlator: hentai.scanlator,
-                upload_date: hentai.upload_date,
-                tags: hentai.tags,
-                num_pages: hentai.num_pages,
-                num_favorites: hentai.num_favorites,
-                channel,
-            }).collect(),
+            result: nhentai
+                .result
+                .into_iter()
+                .map(|hentai| NHentai {
+                    id: hentai.id,
+                    title: hentai.title,
+                    media_id: hentai.media_id,
+                    images: hentai.images,
+                    scanlator: hentai.scanlator,
+                    upload_date: hentai.upload_date,
+                    tags: hentai.tags,
+                    num_pages: hentai.num_pages,
+                    num_favorites: hentai.num_favorites,
+                    channel,
+                })
+                .collect(),
         },
-        Err(_error) => EMPTY_NHENTAI_GROUP
+        Err(_error) => EMPTY_NHENTAI_GROUP,
     }
 }
-
 
 #[cached(
     type = "TimedCache<String, Vec<NHentaiComment>>",
@@ -219,7 +221,7 @@ pub async fn search_nhentai(
 pub async fn get_comment(id: u32, channel: NhqlChannel) -> Vec<NHentaiComment> {
     // ? It would take a very long time until nhentai get more id than 10M
     if id > 10_000_000 {
-        return vec![]
+        return vec![];
     }
 
     let endpoint = match channel {
@@ -229,17 +231,17 @@ pub async fn get_comment(id: u32, channel: NhqlChannel) -> Vec<NHentaiComment> {
     };
 
     if let Ok(comments) = get::<Vec<NHentaiComment>>(endpoint).await {
-        return comments
+        return comments;
     }
 
     if channel != NhqlChannel::Hifumin {
-        return vec![]
+        return vec![];
     }
 
-    if let Ok(comments) = get::<Vec<NHentaiComment>>(
-        format!("https://nhentai.net/api/gallery/{}/comments", id)
-    ).await {
-        return comments
+    if let Ok(comments) =
+        get::<Vec<NHentaiComment>>(format!("https://nhentai.net/api/gallery/{}/comments", id)).await
+    {
+        return comments;
     }
 
     vec![]
@@ -252,7 +254,7 @@ pub async fn get_comment_range(
     batch: Option<u32>,
     batch_by: Option<u32>,
     order_by: Option<NhqlCommentOrder>,
-    channel: NhqlChannel
+    channel: NhqlChannel,
 ) -> Vec<NHentaiComment> {
     let mut comments = get_comment(id, channel).await;
 
@@ -305,7 +307,7 @@ pub async fn get_comment_range(
 pub async fn get_related(id: u32) -> Vec<NHentai> {
     // ? It would take a very long time until nhentai get more id than 1M
     if id > 750_000 {
-        return vec![]
+        return vec![];
     }
 
     let response = get::<NHentaiRelated>(format!("https://nhentai.net/api/gallery/{}/related", id));
