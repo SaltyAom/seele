@@ -1,5 +1,5 @@
 #!/bin/sh
-./parallel "varnishd \
+./parallel.sh "varnishd \
     -f /etc/varnish/default.vcl \
     -a :3002 \
     -T localhost:6082 \

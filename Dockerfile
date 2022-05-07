@@ -19,7 +19,7 @@ COPY Cargo.lock .
 RUN RUSTFLAGS='-C target-cpu=native' cargo build --release
 
 # Build project
-COPY . .
+COPY src src
 
 RUN RUSTFLAGS='-C target-cpu=native' cargo install --target x86_64-unknown-linux-musl --path .
 
@@ -68,7 +68,7 @@ COPY ./ops/parallel.sh .
 
 COPY data data
 
-RUN chmod parallel.sh
+RUN chmod 555 parallel.sh
 RUN chmod 555 start.sh
 
 EXPOSE 3000
