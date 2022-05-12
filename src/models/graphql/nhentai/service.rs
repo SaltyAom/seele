@@ -82,9 +82,7 @@ pub async fn internal_get_nhentai_by_id(id: u32, channel: NhqlChannel) -> Option
         return None;
     }
 
-    if let Ok(nhentai) =
-        get::<InternalNHentai>(format!("https://nhentai.net/api/gallery/{}", id)).await
-    {
+    if let Ok(nhentai) = get::<InternalNHentai>(format!("https://nhentai.net/api/gallery/{}", id)).await {
         return Some(nhentai);
     }
 
@@ -155,6 +153,14 @@ pub async fn search_nhentai(
                         channel,
                     })
                     .collect(),
+            };
+        }
+
+        if channel == NhqlChannel::Hifumin && hentais.len() == 0 {
+            return NHentaiGroup {
+                num_pages: None,
+                per_page: Some(25),
+                result: vec![],
             };
         }
     }
