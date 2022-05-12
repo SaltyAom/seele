@@ -15,6 +15,11 @@ const PARALLEL_REQUESTS: usize = 25;
 
 pub async fn get_nhentais_by_id(id: Vec<u32>) -> Vec<NHentai> {
     let limit = id.len();
+
+    if limit == 0 {
+        return vec![]
+    }
+
     let (tx, mut rx) = tokio::sync::mpsc::channel::<NHentai>(limit);
 
     stream::iter(id)
