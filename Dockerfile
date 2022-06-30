@@ -6,32 +6,26 @@ WORKDIR /usr/src/
 
 RUN apk add --no-cache musl-dev ca-certificates cmake musl-utils libressl-dev
 
-# Setup tools for building
-RUN rustup target add x86_64-unknown-linux-musl
+RUN USER=root cargo new app
 
-# ? Create dummy project for package installation caching
-RUN USER=root cargo new akashic
-WORKDIR /usr/src/akashic
+WORKDIR /usr/src/app
 
 COPY Cargo.toml .
 COPY Cargo.lock .
 
-RUN RUSTFLAGS='-C target-cpu=native' cargo build --release
-
-# Build project
 COPY src src
 
-RUN RUSTFLAGS='-C target-cpu=native' cargo install --target x86_64-unknown-linux-musl --path .
+RUN cargo build --release
 
 # * --- Running Stage ---
 FROM alpine:3.15.4 as main
 
 WORKDIR /usr/app
 
-COPY --from=builder /usr/local/cargo/bin/akashic akashic
+COPY --from=builder /usr/src/app/target/release/akashic app
 
 COPY data data
 
 EXPOSE 8080
 
-CMD ["./akashic"]
+CMD ["./app"]
