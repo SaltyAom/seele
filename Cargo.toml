@@ -1,6 +1,6 @@
 [package]
-name = "akashic"
-version = "0.1.1"
+name = "seele"
+version = "0.1.0"
 authors = ["SaltyAom <aomkirby123@gmail.com>"]
 edition = "2021"
 
@@ -11,21 +11,23 @@ lto = true
 codegen-units = 1
 
 [dependencies]
-actix-web = "4.0.1"
+actix-web = "4.1.0"
 actix-cors = "0.6.1"
 actix-files = "0.6.0"
 
-async-graphql = "3.0.38"
-async-graphql-actix-web = "3.0.38"
+async-graphql = "4.0.4"
+async-graphql-actix-web = "4.0.4"
 
-serde = "1.0.136"
-serde_json = "1.0.79"
-serde-aux = "3.0.1"
+serde = "1.0.137"
+serde_json = "1.0.82"
+serde-aux = "3.1.0"
 
-reqwest = { version = "0.11.10", default-features = false, features = ["rustls-tls"] }
-cached = "0.34.0"
-anyhow = "1.0.52"
+reqwest = { version = "0.11.11", default-features = false, features = ["rustls-tls", "json"] }
+cached = "0.34.1"
+anyhow = "1.0.58"
 
-tokio = { version = "1.18.0", features = ["fs"] }
+tokio = { version = "1.19.2", features = ["fs"] }
 futures = "0.3.21"
 lazy_static = "1.4.0"
+
+meilisearch-sdk = "0.17.0"

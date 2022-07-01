@@ -8,6 +8,8 @@ use crate::services::request::get;
 use async_graphql::InputType;
 use cached::{proc_macro::cached, TimedCache};
 
+use crate::services::search::services::search;
+
 use futures::{stream, StreamExt};
 use tokio::fs;
 
@@ -119,11 +121,11 @@ pub async fn get_nhentai_by_id(id: u32, channel: NhqlChannel) -> NHentai {
 #[cached(
     type = "TimedCache<String, NHentaiGroup>",
     create = "{ TimedCache::with_lifespan(3 * 3600) }",
-    convert = r#"{ format!("{}{}{}{}{}{}{}", channel.to_value(), search.to_lowercase(), page, includes.join(""), excludes.join(""), tags.join(""), artists.join("") ) }"#
+    convert = r#"{ format!("{}{}{}{}{}{}{}", channel.to_value(), keyword.to_lowercase(), page, includes.join(""), excludes.join(""), tags.join(""), artists.join("") ) }"#
 )]
 pub async fn search_nhentai(
     channel: NhqlChannel,
-    search: String,
+    keyword: String,
     page: u16,
     includes: Vec<String>,
     excludes: Vec<String>,
@@ -131,13 +133,8 @@ pub async fn search_nhentai(
     artists: Vec<String>,
 ) -> NHentaiGroup {
     if channel == NhqlChannel::Hifumin || channel == NhqlChannel::HifuminFirst {
-        let hentais = match get::<Vec<u32>>(
-            format!("https://search.hifumin.app/search/{}/{}", search, page)
-        )
-        .await {
-            Ok(ids) => get_nhentais_by_id(ids).await,
-            Err(_error) => vec![]
-        };
+        let search_results = search(keyword.to_owned(), page).await;
+        let hentais = get_nhentais_by_id(search_results).await;
 
         if channel == NhqlChannel::HifuminFirst || (channel == NhqlChannel::Hifumin && hentais.len() > 0) {
             return NHentaiGroup {
@@ -170,7 +167,7 @@ pub async fn search_nhentai(
         }
     }
 
-    let mut query = search + " ";
+    let mut query = keyword + " ";
 
     for tag in tags.into_iter() {
         query += &format!("tag:\"{}\"", tag);
