@@ -1,9 +1,10 @@
-# Opener Akashic
+# Seele
 Multi-hentai GraphQL reverse proxy API implemented in Rust
 
 TODO:
 - [x] NHentai
     - [X] nhql remap
+    - [X] search engine
 - [ ] Fakku
     - [ ] Implement custom scrapper as public API went shutdown
 - [ ] ~~e-hentai.org~~ Not going to implement
