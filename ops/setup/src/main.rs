@@ -4,7 +4,7 @@ use std::{
     process::{Command, Stdio, exit, Child},
     thread,
     collections::HashMap,
-    env::current_dir
+    env::current_dir, time::Duration
 };
 
 use tokio::{self, task::JoinHandle};
@@ -156,7 +156,7 @@ pub async fn create_client() {
         .add_documents(&documents, Some("id"))
         .await
         .expect("Unable to add documents to batch")
-        .wait_for_completion(&meilisearch, None, None)
+        .wait_for_completion(&meilisearch, None, Some(Duration::from_secs(60 * 60)))
         .await
         .expect("Unable to join the remote server");
 }
