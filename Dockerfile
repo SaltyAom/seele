@@ -62,7 +62,7 @@ RUN apt install pkg-config libssl-dev -y
 
 WORKDIR /home
 
-COPY --from=builder /usr/src/app/target/release/selee ./selee
+COPY --from=builder /usr/src/app/target/release/seele ./seele
 COPY --from=meilisearch /home/meilisearch ./meilisearch
 COPY --from=indexer /usr/src/app/data.ms ./data.ms
 
