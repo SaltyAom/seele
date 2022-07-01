@@ -1,6 +1,6 @@
 use super::{
     model::*,
-    super::nhentai::model::*,
+    super::nhentai::model::*
 };
 
 use cached::{ cached_key, TimedCache };

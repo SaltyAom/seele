@@ -15,7 +15,7 @@ pub enum NhqlCommentOrder {
 }
 
 /// Specified source origin
-#[derive(Serialize, Deserialize, Enum, Copy, Clone, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Enum, Copy, Clone, Eq, PartialEq, Debug)]
 pub enum NhqlChannel {
     /// Strategy: Hifumin first then fallback to nHentai.
     /// (DEFAULT)
