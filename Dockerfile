@@ -34,7 +34,7 @@ COPY Cargo.lock Cargo.lock
 
 RUN rustup target add x86_64-unknown-linux-musl
 
-RUN RUSTFLAGS='-C target-feature=-crt-static' cargo build --target x86_64-unknown-linux-musl --release
+RUN cargo build --target x86_64-unknown-linux-musl --release
 
 # ? --- Indexer ---
 FROM rust:1.62-slim-bullseye AS indexer
