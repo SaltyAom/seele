@@ -136,7 +136,7 @@ pub async fn search_nhentai(
         let search_results = search(keyword.to_owned(), page).await;
         let hentais = get_nhentais_by_id(search_results).await;
 
-        if channel == NhqlChannel::HifuminFirst || (channel == NhqlChannel::Hifumin && hentais.len() > 0) {
+        if channel == NhqlChannel::Hifumin || (channel == NhqlChannel::HifuminFirst && hentais.len() > 0) {
             return NHentaiGroup {
                 num_pages: None,
                 per_page: Some(25),
@@ -155,14 +155,6 @@ pub async fn search_nhentai(
                         channel,
                     })
                     .collect(),
-            };
-        }
-
-        if channel == NhqlChannel::Hifumin && hentais.len() == 0 {
-            return NHentaiGroup {
-                num_pages: None,
-                per_page: Some(25),
-                result: vec![],
             };
         }
     }
