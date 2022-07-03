@@ -34,7 +34,7 @@ COPY Cargo.lock Cargo.lock
 
 RUN rustup target add x86_64-unknown-linux-musl
 
-RUN cargo build --target x86_64-unknown-linux-musl --release
+RUN RUSTFLAGS='-C target-feature=-crt-static -C target-cpu=native' cargo build --target x86_64-unknown-linux-musl --release
 
 # ? --- Indexer ---
 FROM rust:1.62-slim-bullseye AS indexer
@@ -65,11 +65,11 @@ RUN cargo run --release
 # * --- Running Stage ---
 FROM alpine:3.16
 
-RUN apk add gcompat libgcc build-base openssl
+RUN apk add build-base
 
 WORKDIR /home
 
-COPY --from=builder /usr/src/app/target/release/seele ./seele
+COPY --from=builder /usr/src/app/target/x86_64-unknown-linux-musl/release/seele ./seele
 COPY --from=meilisearch-musl /home/meilisearch ./meilisearch
 COPY --from=indexer /usr/src/app/data.ms ./data.ms
 
