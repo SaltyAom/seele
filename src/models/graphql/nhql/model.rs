@@ -87,7 +87,7 @@ impl Nhql {
     }
 
     pub async fn related(&self) -> Vec<Nhql> {
-        get_nhql_related(self.id).await
+        get_nhql_related(self.id, self.info.channel).await
     }
 }
 

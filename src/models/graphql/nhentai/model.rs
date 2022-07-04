@@ -72,7 +72,7 @@ impl NHentai {
     pub async fn related(
         &self, 
     ) -> Vec<NHentai> {
-        get_related(self.id.unwrap()).await
+        get_related(self.id.unwrap(), self.channel).await
     }
 }
 

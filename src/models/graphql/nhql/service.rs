@@ -110,8 +110,8 @@ pub async fn get_nhql_comment(
         .collect()
 }
 
-pub async fn get_nhql_related(id: u32) -> Vec<Nhql> {
-    let related = get_related(id).await;
+pub async fn get_nhql_related(id: u32, channel: NhqlChannel) -> Vec<Nhql> {
+    let related = get_related(id, channel).await;
 
     related
         .into_iter()

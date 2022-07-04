@@ -229,7 +229,7 @@ pub async fn get_comment(id: u32, channel: NhqlChannel) -> Vec<NHentaiComment> {
         return comments;
     }
 
-    if channel != NhqlChannel::Hifumin {
+    if channel != NhqlChannel::HifuminFirst {
         return vec![];
     }
 
@@ -299,17 +299,34 @@ pub async fn get_comment_range(
     create = "{ TimedCache::with_lifespan(6 * 3600) }",
     convert = r#"{ id }"#
 )]
-pub async fn get_related(id: u32) -> Vec<NHentai> {
-    // ? It would take a very long time until nhentai get more id than 1M
-    if id > 750_000 {
+pub async fn get_related(
+    id: u32, 
+    channel: NhqlChannel,
+) -> Vec<NHentai> {
+    // ? It would take a very long time until nhentai get more id than 10M
+    if id > 10_000_000 {
         return vec![];
     }
 
-    let response = get::<NHentaiRelated>(format!("https://nhentai.net/api/gallery/{}/related", id));
+    let endpoint = match channel {
+        NhqlChannel::Hifumin => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
+        NhqlChannel::HifuminFirst => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
+        NhqlChannel::Nhentai => format!("https://nhentai.net/api/gallery/{}/comments", id)
+    };
 
-    if let Ok(related) = response.await {
-        related.result
-    } else {
-        vec![]
+    if let Ok(related) = get::<Vec<NHentai>>(endpoint).await {
+        return related;
     }
+
+    if channel != NhqlChannel::HifuminFirst {
+        return vec![];
+    }
+
+    if let Ok(related) = get::<Vec<NHentai>>(
+        format!("https://nhentai.net/api/gallery/{}/related", id)
+    ).await {
+        return related;
+    }
+
+    vec![]
 }

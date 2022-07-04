@@ -6,7 +6,6 @@ use async_graphql::{
     MergedObject, 
     EmptyMutation, 
     EmptySubscription,
-    // extensions::ApolloTracing 
 };
 
 use nhentai::NHentaiQueryRoot;
@@ -23,6 +22,6 @@ pub fn create_schema() -> AppSchema {
         EmptyMutation,
         EmptySubscription
     )
-    // .extension(ApolloTracing)
+    .limit_depth(3)
     .finish()
 }
