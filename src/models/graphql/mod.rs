@@ -22,6 +22,6 @@ pub fn create_schema() -> AppSchema {
         EmptyMutation,
         EmptySubscription
     )
-    .limit_depth(3)
+    .limit_depth(25)
     .finish()
 }
