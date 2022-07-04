@@ -41,6 +41,8 @@ pub async fn wait_for_search_engine() {
             }
         }
     }
+
+    search("yuri".to_owned(), 1).await;
 }
 
 lazy_static! {

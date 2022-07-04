@@ -59,9 +59,13 @@ pub async fn internal_get_nhentai_by_id(id: u32, channel: NhqlChannel) -> Option
     }
 
     if channel == NhqlChannel::Hifumin || channel == NhqlChannel::HifuminFirst {
+        let t1 = std::time::Instant::now();
         match fs::read_to_string(format!("data/{}.json", id)).await {
             Ok(stringified_json) => {
+                println!("Read file: {}", t1.elapsed().as_secs_f64());
+                let t1 = std::time::Instant::now();
                 if let Ok(json) = serde_json::from_str::<InternalNHentai>(&stringified_json) {
+                    println!("Parse JSON: {}", t1.elapsed().as_secs_f64());
                     return Some(json);
                 }
             }

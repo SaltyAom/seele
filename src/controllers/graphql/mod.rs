@@ -41,7 +41,11 @@ pub async fn v1_graphql_executor(
     schema: Data<AppSchema>,
     request: GraphQLRequest
 ) -> GraphQLResponse {
-    schema.execute(request.into_inner()).await.into()
+    let t1 = std::time::Instant::now();
+    let result = schema.execute(request.into_inner()).await.into();
+    println!("GQL: {:?}\n", t1.elapsed().as_secs_f64());
+
+    result
 }
 
 #[get("/v1/graphql")]
