@@ -73,6 +73,7 @@ COPY --from=builder /usr/src/app/target/x86_64-unknown-linux-musl/release/seele 
 COPY --from=meilisearch-musl /home/meilisearch ./meilisearch
 COPY --from=indexer /usr/src/app/data.ms ./data.ms
 
+COPY data data
 COPY ops/start.sh start.sh
 
 RUN chmod 747 ./meilisearch
