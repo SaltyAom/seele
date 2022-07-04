@@ -19,7 +19,7 @@ use meilisearch_sdk::{
 use reqwest;
 
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct Hentai {
     pub id: u32,
     pub title: String,
@@ -27,7 +27,7 @@ pub struct Hentai {
     pub page: u16,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub struct Status {
     status: String
 }

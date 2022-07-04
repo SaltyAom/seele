@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct HentaiSearch {
     pub id: u32
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub struct Status {
     pub status: String
 }

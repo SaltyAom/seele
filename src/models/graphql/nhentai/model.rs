@@ -10,7 +10,7 @@ use super::service::{ get_comment_range, get_related };
 #[derive(Default)]
 pub struct NHentaiQuery;
 
-#[derive(Serialize, Deserialize, Clone, SimpleObject, Debug)]
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
 #[graphql(complex)]
 pub struct NHentai {
     #[serde(deserialize_with = "deserialize_option_number_from_string")]
@@ -27,7 +27,7 @@ pub struct NHentai {
     pub channel: NhqlChannel
 }
 
-#[derive(Serialize, Deserialize, Clone, SimpleObject, Debug)]
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct InternalNHentai {
     #[serde(deserialize_with = "deserialize_option_number_from_string")]
     pub id: Option<u32>,
@@ -42,14 +42,14 @@ pub struct InternalNHentai {
     pub num_favorites: Option<u32>,
 }
 
-#[derive(Serialize, Deserialize, Clone, SimpleObject, Debug)]
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct MultipleNHentaiResponse {
     pub success: bool,
     pub error: Option<&'static str>,
     pub data: Vec<NHentai>
 }
 
-#[derive(Serialize, Deserialize, Clone, SimpleObject, Debug)]
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct NHentaiTitle {
     pub english: Option<String>,
     pub japanese: Option<String>,
@@ -76,14 +76,14 @@ impl NHentai {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, SimpleObject, Debug)]
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct NHentaiImages {
     pub pages: NHentaiPages,
     pub cover: NHentaiPage,
     pub thumbnail: NHentaiPage
 }
 
-#[derive(Serialize, Deserialize, Clone, SimpleObject, Debug)]
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct NHentaiPage {
     pub t: Option<String>,
     pub w: Option<u16>,
@@ -92,7 +92,7 @@ pub struct NHentaiPage {
 
 pub type NHentaiPages = Vec<NHentaiPage>;
 
-#[derive(Serialize, Deserialize, Clone, SimpleObject, Debug)]
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct NHentaiTag {
     pub id: u32,
     pub r#type: String,
@@ -103,21 +103,21 @@ pub struct NHentaiTag {
 
 pub type NHentaiTags = Vec<NHentaiTag>;
 
-#[derive(Serialize, Deserialize, Clone, SimpleObject, Debug)]
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct NHentaiGroup {
     pub result: Vec<NHentai>,
     pub num_pages: Option<u16>,
     pub per_page: Option<u8>
 }
 
-#[derive(Serialize, Deserialize, Clone, SimpleObject, Debug)]
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct InternalNHentaiGroup {
     pub result: Vec<InternalNHentai>,
     pub num_pages: Option<u16>,
     pub per_page: Option<u8>
 }
 
-#[derive(Serialize, Deserialize, Clone, SimpleObject, Debug)]
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct NHentaiComment {
     pub id: u32,
     pub gallery_id: u32,
@@ -126,7 +126,7 @@ pub struct NHentaiComment {
     pub body: String
 }
 
-#[derive(Serialize, Deserialize, Clone, SimpleObject, Debug)]
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct NHentaiCommentPoster {
     pub id: u32,
     pub username: String,
@@ -136,7 +136,7 @@ pub struct NHentaiCommentPoster {
     pub is_staff: bool
 }
 
-#[derive(Serialize, Deserialize, Clone, SimpleObject, Debug)]
+#[derive(Serialize, Deserialize, Clone, SimpleObject)]
 pub struct NHentaiRelated {
     pub result: Vec<NHentai>
 }
