@@ -309,9 +309,9 @@ pub async fn get_related(
     }
 
     let endpoint = match channel {
-        NhqlChannel::Hifumin => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
-        NhqlChannel::HifuminFirst => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}.json", id),
-        NhqlChannel::Nhentai => format!("https://nhentai.net/api/gallery/{}/comments", id)
+        NhqlChannel::Hifumin => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}-related.json", id),
+        NhqlChannel::HifuminFirst => format!("https://raw.githubusercontent.com/saltyaom-engine/hifumin-comment-mirror/generated/{}-related.json", id),
+        NhqlChannel::Nhentai => format!("https://nhentai.net/api/gallery/{}/related", id)
     };
 
     if let Ok(related) = get::<Vec<NHentai>>(endpoint).await {
