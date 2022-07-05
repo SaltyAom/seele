@@ -147,8 +147,7 @@ cached_key! {
                 amount: nhentai.images.pages.len() as u32,
                 favorite: nhentai.num_favorites.unwrap(),
                 upload: nhentai.upload_date.unwrap(),
-                media_id: nhentai.media_id.unwrap(),
-                channel: nhentai.channel
+                media_id: nhentai.media_id.unwrap()
             },
             metadata: map_metadata(nhentai.tags)
         }

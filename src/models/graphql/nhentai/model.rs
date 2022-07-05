@@ -23,8 +23,7 @@ pub struct NHentai {
     pub upload_date: Option<u32>,
     pub tags: NHentaiTags,
     pub num_pages: Option<u16>,
-    pub num_favorites: Option<u32>,
-    pub channel: NhqlChannel
+    pub num_favorites: Option<u32>
 }
 
 #[derive(Serialize, Deserialize, Clone, SimpleObject)]
@@ -64,15 +63,17 @@ impl NHentai {
         to: Option<u32>,
         batch: Option<u32>,
         batch_by: Option<u32>,
-        order_by: Option<NhqlCommentOrder>
+        order_by: Option<NhqlCommentOrder>,
+        #[graphql(default_with = "NhqlChannel::HifuminFirst")] channel: NhqlChannel
     ) -> Vec<NHentaiComment> {
-        get_comment_range(self.id.unwrap(), from, to, batch, batch_by ,order_by, self.channel).await
+        get_comment_range(self.id.unwrap(), from, to, batch, batch_by ,order_by, channel).await
     }
 
     pub async fn related(
-        &self, 
+        &self,
+        #[graphql(default_with = "NhqlChannel::HifuminFirst")] channel: NhqlChannel
     ) -> Vec<NHentai> {
-        get_related(self.id.unwrap(), self.channel).await
+        get_related(self.id.unwrap(), channel).await
     }
 }
 

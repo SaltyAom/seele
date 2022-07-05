@@ -1,5 +1,3 @@
-use crate::models::graphql::nhql::model::NhqlChannel;
-
 use super::model::*;
 
 pub const EMPTY_NHENTAI_DATA: NHentai = NHentai {
@@ -27,8 +25,7 @@ pub const EMPTY_NHENTAI_DATA: NHentai = NHentai {
     upload_date: None,
     tags: vec![],
     num_pages: None,
-    num_favorites: None,
-    channel: NhqlChannel::Nhentai
+    num_favorites: None
 };
 
 pub const EMPTY_NHENTAI_HIFUMIN_DATA: NHentai = NHentai {
@@ -56,8 +53,7 @@ pub const EMPTY_NHENTAI_HIFUMIN_DATA: NHentai = NHentai {
     upload_date: None,
     tags: vec![],
     num_pages: None,
-    num_favorites: None,
-    channel: NhqlChannel::Hifumin
+    num_favorites: None
 };
 
 pub const EMPTY_NHENTAI_GROUP: NHentaiGroup = NHentaiGroup {

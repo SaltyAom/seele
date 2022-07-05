@@ -107,8 +107,7 @@ pub async fn get_nhentai_by_id(id: u32, channel: NhqlChannel) -> NHentai {
             upload_date: nhentai.upload_date,
             tags: nhentai.tags,
             num_pages: nhentai.num_pages,
-            num_favorites: nhentai.num_favorites,
-            channel: channel,
+            num_favorites: nhentai.num_favorites
         }
     } else {
         match channel {
@@ -151,8 +150,7 @@ pub async fn search_nhentai(
                         upload_date: hentai.upload_date,
                         tags: hentai.tags,
                         num_pages: hentai.num_pages,
-                        num_favorites: hentai.num_favorites,
-                        channel,
+                        num_favorites: hentai.num_favorites
                     })
                     .collect(),
             };
@@ -199,8 +197,7 @@ pub async fn search_nhentai(
                     upload_date: hentai.upload_date,
                     tags: hentai.tags,
                     num_pages: hentai.num_pages,
-                    num_favorites: hentai.num_favorites,
-                    channel,
+                    num_favorites: hentai.num_favorites
                 })
                 .collect(),
         },
@@ -314,18 +311,18 @@ pub async fn get_related(
         NhqlChannel::Nhentai => format!("https://nhentai.net/api/gallery/{}/related", id)
     };
 
-    if let Ok(related) = get::<Vec<NHentai>>(endpoint).await {
-        return related;
+    if let Ok(related) = get::<NHentaiRelated>(endpoint).await {
+        return related.result;
     }
 
     if channel != NhqlChannel::HifuminFirst {
         return vec![];
     }
 
-    if let Ok(related) = get::<Vec<NHentai>>(
+    if let Ok(related) = get::<NHentaiRelated>(
         format!("https://nhentai.net/api/gallery/{}/related", id)
     ).await {
-        return related;
+        return related.result;
     }
 
     vec![]

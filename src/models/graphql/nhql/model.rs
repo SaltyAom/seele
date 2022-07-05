@@ -67,7 +67,8 @@ impl Nhql {
         to: Option<u32>,
         batch: Option<u32>,
         batch_by: Option<u32>,
-        order_by: Option<NhqlCommentOrder>
+        order_by: Option<NhqlCommentOrder>,
+        #[graphql(default_with = "NhqlChannel::HifuminFirst")] channel: NhqlChannel
     ) -> NhqlCommentResponse {
         let comments = get_nhql_comment(
             self.id, 
@@ -76,18 +77,21 @@ impl Nhql {
             batch,
             batch_by, 
             order_by,
-            self.info.channel
+            channel
         ).await;
 
         NhqlCommentResponse {
             // From cache
-            total: get_comment(self.id, self.info.channel).await.len(),
+            total: get_comment(self.id, channel).await.len(),
             data: comments
         }
     }
 
-    pub async fn related(&self) -> Vec<Nhql> {
-        get_nhql_related(self.id, self.info.channel).await
+    pub async fn related(
+        &self,
+        #[graphql(default_with = "NhqlChannel::HifuminFirst")] channel: NhqlChannel
+    ) -> Vec<Nhql> {
+        get_nhql_related(self.id, channel).await
     }
 }
 
@@ -124,8 +128,7 @@ pub struct NhqlInfo {
     pub amount: u32,
     pub favorite: u32,
     pub upload: u32,
-    pub media_id: u32,
-    pub channel: NhqlChannel
+    pub media_id: u32
 }
 
 #[derive(Serialize, Clone, SimpleObject)]
