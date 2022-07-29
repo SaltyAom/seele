@@ -8,9 +8,11 @@ FROM alpine:3.16 as meilisearch
 
 WORKDIR /home
 
-RUN apk add curl
+COPY ops/install-meilisearch.sh install.sh
 
-RUN curl -L https://install.meilisearch.com | sh
+RUN chmod 500 install.sh
+
+RUN ./install.sh
 
 # * --- Build Stage ---
 FROM rust:1.62-alpine AS builder

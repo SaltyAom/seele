@@ -120,7 +120,10 @@ pub async fn create_client() {
     meilisearch
         .create_index("hentai", Some("id"))
         .await
-        .expect("Unable to create Primary Key");
+        .expect("Unable to create Primary Key")
+        .wait_for_completion(&meilisearch, None, None)
+        .await
+        .expect("Unable to create index");
 
     let engine = meilisearch.index("hentai");
 
