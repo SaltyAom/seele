@@ -8,6 +8,8 @@ FROM alpine:3.16 as meilisearch
 
 WORKDIR /home
 
+RUN apk add --no-cache curl
+
 COPY ops/install-meilisearch.sh install.sh
 
 RUN chmod 500 install.sh
