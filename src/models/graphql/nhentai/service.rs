@@ -132,7 +132,7 @@ pub async fn search_nhentai(
     artists: Vec<String>,
 ) -> NHentaiGroup {
     if channel == NhqlChannel::Hifumin || channel == NhqlChannel::HifuminFirst {
-        let search_results = search(keyword.to_owned(), page).await;
+        let search_results = search(keyword.to_owned(), page, &excludes).await;
         let hentais = get_nhentais_by_id(search_results).await;
 
         if channel == NhqlChannel::Hifumin || (channel == NhqlChannel::HifuminFirst && hentais.len() > 0) {

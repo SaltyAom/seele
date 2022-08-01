@@ -1,6 +1,5 @@
 use reqwest;
-use cached::{proc_macro::cached, TimedCache};
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use meilisearch_sdk::{
     client::Client,
@@ -43,8 +42,8 @@ pub async fn wait_for_search_engine() {
     }
 
     // Boot up search instance
-    search("yuri".to_owned(), 1).await;
-    search("glasses".to_owned(), 1).await;
+    search("yuri".to_owned(), 1, &vec![]).await;
+    search("glasses".to_owned(), 1, &vec![]).await;
 }
 
 lazy_static! {
@@ -53,25 +52,42 @@ lazy_static! {
     ]);
 }
 
-#[cached(
-    type = "TimedCache<String, Vec<u32>>",
-    create = "{ TimedCache::with_lifespan(6 * 3600) }",
-    convert = r#"{ format!("{}{}",keyword, batch) }"#
-)]
-pub async fn search<'a>(keyword: String, batch: u16) -> Vec<u32> {
+pub async fn search<'a>(keyword: String, batch: u16, excludes: &Vec<String>) -> Vec<u32> {
     // Limitation of Meilisearch
     if batch > 40 {         
         return vec![]
     }
 
+    let to_excludes = excludes.iter().map(|tag| format!("(tags != \"{}\")", tag)).collect::<Vec<String>>().join(" AND ");
+
     let offset = (batch - 1) as usize * 25;
 
+    let mut unioned: String = String::new();
+
     let query = if let Some(filter) = FILTERS.get(&keyword) {
+        if to_excludes != "" {
+            unioned = format!("{} AND {}", filter, to_excludes);
+
+            Query::new(&SEARCH_ENGINE)
+                .with_query(&keyword)
+                .with_limit(25)
+                .with_offset(offset)
+                .with_filter(&unioned)
+                .build()
+        } else {
+            Query::new(&SEARCH_ENGINE)
+                .with_query(&keyword)
+                .with_limit(25)
+                .with_offset(offset)
+                .with_filter(filter)
+                .build()
+        }
+    } else if to_excludes != "" {
         Query::new(&SEARCH_ENGINE)
             .with_query(&keyword)
             .with_limit(25)
             .with_offset(offset)
-            .with_filter(filter)
+            .with_filter(&to_excludes)
             .build()
     } else {
         Query::new(&SEARCH_ENGINE)

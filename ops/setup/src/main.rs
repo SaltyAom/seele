@@ -134,11 +134,11 @@ pub async fn create_client() {
             searchable_attributes: Some(vec!["tags".to_owned(), "title".to_owned()]),
             filterable_attributes: Some(vec!["tags".to_owned()]),
             ranking_rules: Some(vec![
+                "exactness".to_owned(),
                 "words".to_owned(),
                 "id:desc".to_owned(),
                 "attribute".to_owned(),
                 "proximity".to_owned(),
-                "exactness".to_owned(),
                 "typo".to_owned()
             ]),
             stop_words: None,
