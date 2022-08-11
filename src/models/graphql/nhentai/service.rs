@@ -118,21 +118,21 @@ pub async fn get_nhentai_by_id(id: u32, channel: NhqlChannel) -> NHentai {
 }
 
 #[cached(
-    type = "TimedCache<u64, NHentaiGroup>",
+    type = "TimedCache<u64, (u32, NHentaiGroup)>",
     create = "{ TimedCache::with_lifespan(3 * 3600) }",
     convert = r#"{ option.hash_value() }"#
 )]
 pub async fn search_nhentai(
     option: SearchOption,
-) -> NHentaiGroup {
+) -> (u32, NHentaiGroup) {
     let channel = option.channel;
 
     if channel == NhqlChannel::Hifumin || channel == NhqlChannel::HifuminFirst {
-        let search_results = search(option.clone()).await;
+        let (total, search_results) = search(option.clone()).await;
         let hentais = get_nhentais_by_id(search_results).await;
 
         if channel == NhqlChannel::Hifumin || (channel == NhqlChannel::HifuminFirst && hentais.len() > 0) {
-            return NHentaiGroup {
+            return (total, NHentaiGroup {
                 num_pages: None,
                 per_page: Some(25),
                 result: hentais
@@ -149,7 +149,7 @@ pub async fn search_nhentai(
                         num_favorites: hentai.num_favorites
                     })
                     .collect(),
-            };
+            });
         }
     }
 
@@ -179,26 +179,29 @@ pub async fn search_nhentai(
     match get::<InternalNHentaiGroup>(
         format!("https://nhentai.net/api/galleries/search?query={}&page={}", query, batch)
     ).await {
-        Ok(nhentai) => NHentaiGroup {
-            num_pages: nhentai.num_pages,
-            per_page: nhentai.per_page,
-            result: nhentai
-                .result
-                .into_iter()
-                .map(|hentai| NHentai {
-                    id: hentai.id,
-                    title: hentai.title,
-                    media_id: hentai.media_id,
-                    images: hentai.images,
-                    scanlator: hentai.scanlator,
-                    upload_date: hentai.upload_date,
-                    tags: hentai.tags,
-                    num_pages: hentai.num_pages,
-                    num_favorites: hentai.num_favorites
-                })
-                .collect(),
-        },
-        Err(_error) => EMPTY_NHENTAI_GROUP,
+        Ok(nhentai) => (
+            0,
+            NHentaiGroup {
+                num_pages: nhentai.num_pages,
+                per_page: nhentai.per_page,
+                result: nhentai
+                    .result
+                    .into_iter()
+                    .map(|hentai| NHentai {
+                        id: hentai.id,
+                        title: hentai.title,
+                        media_id: hentai.media_id,
+                        images: hentai.images,
+                        scanlator: hentai.scanlator,
+                        upload_date: hentai.upload_date,
+                        tags: hentai.tags,
+                        num_pages: hentai.num_pages,
+                        num_favorites: hentai.num_favorites
+                    })
+                    .collect(),
+            }
+        ),
+        Err(_error) => (0, EMPTY_NHENTAI_GROUP),
     }
 }
 

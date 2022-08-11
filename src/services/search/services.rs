@@ -112,12 +112,12 @@ impl Default for SearchOption {
     }
 }
 
-pub async fn search<'a>(search: SearchOption) -> Vec<u32> {
+pub async fn search<'a>(search: SearchOption) -> (u32, Vec<u32>) {
     let SearchOption { keyword, batch, includes, excludes, .. } = search;
 
     // Limitation of Meilisearch
     if batch > 40 {         
-        return vec![]
+        return (0, vec![])
     }
 
     let offset = (batch - 1) as usize * 25;
@@ -144,11 +144,14 @@ pub async fn search<'a>(search: SearchOption) -> Vec<u32> {
     }
 
     match SEARCH_ENGINE.execute_query(&query).await {
-        Ok(results) => results
-            .hits
-            .into_iter()
-            .map(|hit: SearchResult<HentaiSearch>| hit.result.id)
-            .collect(),
-        Err(_) => vec![]
+        Ok(results) => (
+            results.nb_hits as u32,
+            results
+                .hits
+                .into_iter()
+                .map(|hit: SearchResult<HentaiSearch>| hit.result.id)
+                .collect()
+            ),
+        Err(_) => (0, vec![])
     }
 }

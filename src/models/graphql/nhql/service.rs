@@ -56,11 +56,12 @@ pub async fn get_nhql(id: u32, channel: NhqlChannel) -> NHResponse {
 pub async fn search_nhql(
     search: SearchOption
 ) -> NHSearchResponse {
-    let nhentais = search_nhentai(search).await;
+    let (total, nhentais) = search_nhentai(search).await;
 
     if nhentais.result.len() == 0 {
         return NHSearchResponse {
             success: false,
+            total: 0,
             error: Some("Not found"),
             data: vec![],
         };
@@ -69,6 +70,7 @@ pub async fn search_nhql(
     NHSearchResponse {
         success: true,
         error: None,
+        total,
         data: nhentais
             .result
             .into_iter()

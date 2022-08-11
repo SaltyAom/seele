@@ -46,6 +46,7 @@ pub struct NHResponse {
 pub struct NHSearchResponse {
     pub success: bool,
     pub error: Option<&'static str>,
+    pub total: u32,
     pub data: NhqlSearch
 }
 

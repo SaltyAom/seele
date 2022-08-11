@@ -86,6 +86,6 @@ impl NHentaiQuery {
             batch: page,
             includes,
             excludes
-        }).await
+        }).await.1
     }
 }
