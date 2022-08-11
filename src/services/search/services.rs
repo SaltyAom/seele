@@ -1,5 +1,5 @@
 use reqwest;
-use std::collections::HashMap;
+use std::{collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher}};
 
 use meilisearch_sdk::{
     client::Client,
@@ -7,6 +7,7 @@ use meilisearch_sdk::{
     search::{SearchResult, Query},
 };
 
+use crate::models::graphql::nhql::model::NhqlChannel;
 use super::models::{ HentaiSearch, Status };
 
 lazy_static! {
@@ -42,60 +43,105 @@ pub async fn wait_for_search_engine() {
     }
 
     // Boot up search instance
-    search("yuri".to_owned(), 1, &vec![]).await;
-    search("glasses".to_owned(), 1, &vec![]).await;
+    search(SearchOption::keyword("yuri")).await;
+    search(SearchOption::keyword("glasses")).await;
 }
 
 lazy_static! {
     static ref FILTERS: HashMap<String, &'static str> = HashMap::from([
-        ("yuri".to_owned(), r#"(tags != "yaoi") AND (tags != "yuri or ice") AND (tags != "yuuri") AND (tags != "males only")"#)
+        ("yuri".to_owned(), r#"(tags != "yaoi") OR (tags != "yuri or ice") OR (tags != "yuuri") OR (tags != "males only")"#)
     ]);
 }
 
-pub async fn search<'a>(keyword: String, batch: u16, excludes: &Vec<String>) -> Vec<u32> {
+#[derive(PartialEq, Eq, Hash, Clone)]
+pub struct SearchOption {
+    pub keyword: String,
+    pub channel: NhqlChannel,
+    pub batch: u16,
+    pub includes: Vec<String>,
+    pub excludes: Vec<String>
+}
+
+impl SearchOption {
+    pub fn new(keyword: impl Into<String>, batch: u16, includes: Vec<String>, excludes: Vec<String>) -> Self {
+        Self {
+            keyword: keyword.into(),
+            batch,
+            channel: NhqlChannel::HifuminFirst,
+            includes,
+            excludes,
+        }
+    }
+
+    pub fn keyword(keyword: impl Into<String>) -> Self {
+        Self {
+            keyword: keyword.into(),
+            batch: 1,
+            channel: NhqlChannel::HifuminFirst,
+            includes: vec![],
+            excludes: vec![],
+        }
+    }
+
+    pub fn with_batch(keyword: impl Into<String>, batch: u16) -> Self {
+        Self {
+            keyword: keyword.into(),
+            batch,
+            channel: NhqlChannel::HifuminFirst,
+            includes: vec![],
+            excludes: vec![],
+        }
+    }
+
+    pub fn hash_value(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        self.hash(&mut hasher);
+        hasher.finish()
+    }
+}
+
+impl Default for SearchOption {
+    fn default() -> Self {
+        Self { 
+            keyword: "".to_owned(), 
+            batch: 1,
+            channel: NhqlChannel::HifuminFirst,
+            includes: vec![], 
+            excludes: vec![] 
+        }
+    }
+}
+
+pub async fn search<'a>(search: SearchOption) -> Vec<u32> {
+    let SearchOption { keyword, batch, includes, excludes, .. } = search;
+
     // Limitation of Meilisearch
     if batch > 40 {         
         return vec![]
     }
 
-    let to_excludes = excludes.iter().map(|tag| format!("(tags != \"{}\")", tag)).collect::<Vec<String>>().join(" AND ");
-
     let offset = (batch - 1) as usize * 25;
 
-    let mut unioned: String = String::new();
+    let to_includes = includes.iter().map(|tag| format!("(tags = \"{}\")", tag)).collect::<Vec<String>>().join(" AND ");
+    let to_excludes = excludes.iter().map(|tag| format!("(tags != \"{}\")", tag)).collect::<Vec<String>>().join(" OR ");
 
-    let query = if let Some(filter) = FILTERS.get(&keyword) {
-        if to_excludes != "" {
-            unioned = format!("{} AND {}", filter, to_excludes);
+    let mut query = Query::new(&SEARCH_ENGINE)
+        .with_query(&keyword)
+        .with_limit(25)
+        .with_offset(offset)
+        .build();
 
-            Query::new(&SEARCH_ENGINE)
-                .with_query(&keyword)
-                .with_limit(25)
-                .with_offset(offset)
-                .with_filter(&unioned)
-                .build()
-        } else {
-            Query::new(&SEARCH_ENGINE)
-                .with_query(&keyword)
-                .with_limit(25)
-                .with_offset(offset)
-                .with_filter(filter)
-                .build()
-        }
-    } else if to_excludes != "" {
-        Query::new(&SEARCH_ENGINE)
-            .with_query(&keyword)
-            .with_limit(25)
-            .with_offset(offset)
-            .with_filter(&to_excludes)
-            .build()
-    } else {
-        Query::new(&SEARCH_ENGINE)
-            .with_query(&keyword)
-            .with_limit(25)
-            .with_offset(offset)
-            .build()
-    };
+    if let Some(filter) = FILTERS.get(&keyword) {
+        query = query.with_filter(filter).build()
+    }
+
+    if to_includes != "" {
+        query = query.with_filter(&to_includes).build()
+    }
+
+    if to_excludes != "" {
+        query = query.with_filter(&to_excludes).build()
+    }
 
     match SEARCH_ENGINE.execute_query(&query).await {
         Ok(results) => results

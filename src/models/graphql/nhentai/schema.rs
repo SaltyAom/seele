@@ -1,6 +1,6 @@
 use async_graphql::Object;
 
-use crate::models::graphql::nhql::model::NhqlChannel;
+use crate::{models::graphql::nhql::model::NhqlChannel, services::SearchOption};
 
 use super::{
     model::{MultipleNHentaiResponse, NHentai, NHentaiGroup},
@@ -80,6 +80,12 @@ impl NHentaiQuery {
         #[graphql(default_with = "vec![]")] artists: Vec<String>,
         #[graphql(default_with = "NhqlChannel::HifuminFirst")] channel: NhqlChannel
     ) -> NHentaiGroup {
-        search_nhentai(channel, with, page, includes, excludes, tags, artists).await
+        search_nhentai(SearchOption { 
+            keyword: with,
+            channel, 
+            batch: page,
+            includes,
+            excludes
+        }).await
     }
 }

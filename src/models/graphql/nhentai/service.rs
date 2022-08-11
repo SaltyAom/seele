@@ -3,7 +3,7 @@ use super::{
     constant::*,
     model::*,
 };
-use crate::services::request::get;
+use crate::services::{request::get, SearchOption};
 
 use async_graphql::InputType;
 use cached::{proc_macro::cached, TimedCache};
@@ -118,21 +118,17 @@ pub async fn get_nhentai_by_id(id: u32, channel: NhqlChannel) -> NHentai {
 }
 
 #[cached(
-    type = "TimedCache<String, NHentaiGroup>",
+    type = "TimedCache<u64, NHentaiGroup>",
     create = "{ TimedCache::with_lifespan(3 * 3600) }",
-    convert = r#"{ format!("{}{}{}{}{}{}{}", channel.to_value(), keyword.to_lowercase(), page, includes.join(""), excludes.join(""), tags.join(""), artists.join("") ) }"#
+    convert = r#"{ option.hash_value() }"#
 )]
 pub async fn search_nhentai(
-    channel: NhqlChannel,
-    keyword: String,
-    page: u16,
-    includes: Vec<String>,
-    excludes: Vec<String>,
-    tags: Vec<String>,
-    artists: Vec<String>,
+    option: SearchOption,
 ) -> NHentaiGroup {
+    let channel = option.channel;
+
     if channel == NhqlChannel::Hifumin || channel == NhqlChannel::HifuminFirst {
-        let search_results = search(keyword.to_owned(), page, &excludes).await;
+        let search_results = search(option.clone()).await;
         let hentais = get_nhentais_by_id(search_results).await;
 
         if channel == NhqlChannel::Hifumin || (channel == NhqlChannel::HifuminFirst && hentais.len() > 0) {
@@ -157,11 +153,8 @@ pub async fn search_nhentai(
         }
     }
 
+    let SearchOption { keyword, includes, excludes, batch, .. } = option;
     let mut query = keyword + " ";
-
-    for tag in tags.into_iter() {
-        query += &format!("tag:\"{}\"", tag);
-    }
 
     for include in includes.into_iter() {
         query += &format!("+\"{}\"", include);
@@ -171,16 +164,20 @@ pub async fn search_nhentai(
         query += &("+-".to_owned() + &exclude);
     }
 
-    if artists.len() == 1 {
-        query += &format!("artist:\"{}\"", artists[0]);
-    } else {
-        for artist in artists.into_iter() {
-            query += &format!("artist:{}", artist);
-        }
-    }
+    // for tag in tags.into_iter() {
+    //     query += &format!("tag:\"{}\"", tag);
+    // }
+
+    // if artists.len() == 1 {
+    //     query += &format!("artist:\"{}\"", artists[0]);
+    // } else {
+    //     for artist in artists.into_iter() {
+    //         query += &format!("artist:{}", artist);
+    //     }
+    // }
 
     match get::<InternalNHentaiGroup>(
-        format!("https://nhentai.net/api/galleries/search?query={}&page={}", query, page)
+        format!("https://nhentai.net/api/galleries/search?query={}&page={}", query, batch)
     ).await {
         Ok(nhentai) => NHentaiGroup {
             num_pages: nhentai.num_pages,

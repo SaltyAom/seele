@@ -1,5 +1,7 @@
 use async_graphql::Object;
 
+use crate::services::SearchOption;
+
 use super::{
     service::*,
     model::{
@@ -77,10 +79,14 @@ impl NhqlQuery {
         #[graphql(default = 1)] page: u16,
         #[graphql(default_with = "vec![]")] includes: Vec<String>,
         #[graphql(default_with = "vec![]")] excludes: Vec<String>,
-        #[graphql(default_with = "vec![]")] tags: Vec<String>,
-        #[graphql(default_with = "vec![]")] artists: Vec<String>,
         #[graphql(default_with = "NhqlChannel::HifuminFirst")] channel: NhqlChannel
     ) -> NHSearchResponse {
-        search_nhql(channel, with, page, includes, excludes, tags, artists).await
+        search_nhql(SearchOption { 
+            keyword: with,
+            channel, 
+            batch: page,
+            includes,
+            excludes
+        }).await
     }
 }

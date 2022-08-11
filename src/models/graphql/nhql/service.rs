@@ -1,3 +1,5 @@
+use crate::services::SearchOption;
+
 use super::{
     super::nhentai::service::{
         get_comment_range, 
@@ -52,15 +54,9 @@ pub async fn get_nhql(id: u32, channel: NhqlChannel) -> NHResponse {
 }
 
 pub async fn search_nhql(
-    channel: NhqlChannel,
-    find: String,
-    page: u16,
-    includes: Vec<String>,
-    excludes: Vec<String>,
-    tags: Vec<String>,
-    artists: Vec<String>,
+    search: SearchOption
 ) -> NHSearchResponse {
-    let nhentais = search_nhentai(channel, find, page, includes, excludes, tags, artists).await;
+    let nhentais = search_nhentai(search).await;
 
     if nhentais.result.len() == 0 {
         return NHSearchResponse {
