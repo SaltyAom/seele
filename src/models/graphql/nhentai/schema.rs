@@ -76,8 +76,6 @@ impl NHentaiQuery {
         #[graphql(default = 1)] page: u16,
         #[graphql(default_with = "vec![]")] includes: Vec<String>,
         #[graphql(default_with = "vec![]")] excludes: Vec<String>,
-        #[graphql(default_with = "vec![]")] tags: Vec<String>,
-        #[graphql(default_with = "vec![]")] artists: Vec<String>,
         #[graphql(default_with = "NhqlChannel::HifuminFirst")] channel: NhqlChannel
     ) -> NHentaiGroup {
         search_nhentai(SearchOption { 

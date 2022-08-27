@@ -9,3 +9,9 @@ pub struct HentaiSearch {
 pub struct Status {
     pub status: String
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct TagIndex {
+    pub total: u32,
+    pub ids: Vec<u32>
+}

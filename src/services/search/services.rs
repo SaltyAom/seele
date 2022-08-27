@@ -1,5 +1,5 @@
 use reqwest;
-use std::{collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher}};
+use std::{collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher}, fs::File, io::Read};
 
 use meilisearch_sdk::{
     client::Client,
@@ -7,7 +7,7 @@ use meilisearch_sdk::{
     search::{SearchResult, Query},
 };
 
-use crate::models::graphql::nhql::model::NhqlChannel;
+use crate::{models::graphql::nhql::model::NhqlChannel, services::search::models::TagIndex};
 use super::models::{ HentaiSearch, Status };
 
 lazy_static! {
@@ -51,6 +51,18 @@ lazy_static! {
     static ref FILTERS: HashMap<String, &'static str> = HashMap::from([
         ("yuri".to_owned(), r#"(tags != "yaoi") OR (tags != "yuri or ice") OR (tags != "yuuri") OR (tags != "males only")"#)
     ]);
+    static ref TAGS: HashMap<String, TagIndex> = {
+        let mut file = File::open("data/tag.json").expect("data/tag.json");
+        let mut content = String::new();
+    
+        file.read_to_string(&mut content)
+            .expect("tag.json to be readable");
+
+        let tags: HashMap<String, TagIndex> = serde_json::from_str(&content)
+            .expect("tag.json to be valid JSON");
+
+        tags
+    };
 }
 
 #[derive(PartialEq, Eq, Hash, Clone)]
@@ -63,15 +75,15 @@ pub struct SearchOption {
 }
 
 impl SearchOption {
-    pub fn new(keyword: impl Into<String>, batch: u16, includes: Vec<String>, excludes: Vec<String>) -> Self {
-        Self {
-            keyword: keyword.into(),
-            batch,
-            channel: NhqlChannel::HifuminFirst,
-            includes,
-            excludes,
-        }
-    }
+    // pub fn new(keyword: impl Into<String>, batch: u16, includes: Vec<String>, excludes: Vec<String>) -> Self {
+    //     Self {
+    //         keyword: keyword.into(),
+    //         batch,
+    //         channel: NhqlChannel::HifuminFirst,
+    //         includes,
+    //         excludes,
+    //     }
+    // }
 
     pub fn keyword(keyword: impl Into<String>) -> Self {
         Self {
@@ -83,15 +95,15 @@ impl SearchOption {
         }
     }
 
-    pub fn with_batch(keyword: impl Into<String>, batch: u16) -> Self {
-        Self {
-            keyword: keyword.into(),
-            batch,
-            channel: NhqlChannel::HifuminFirst,
-            includes: vec![],
-            excludes: vec![],
-        }
-    }
+    // pub fn with_batch(keyword: impl Into<String>, batch: u16) -> Self {
+    //     Self {
+    //         keyword: keyword.into(),
+    //         batch,
+    //         channel: NhqlChannel::HifuminFirst,
+    //         includes: vec![],
+    //         excludes: vec![],
+    //     }
+    // }
 
     pub fn hash_value(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
@@ -112,22 +124,53 @@ impl Default for SearchOption {
     }
 }
 
+const BATCH_SIZE: usize = 25;
+
 pub async fn search<'a>(search: SearchOption) -> (u32, Vec<u32>) {
     let SearchOption { keyword, batch, includes, excludes, .. } = search;
+
+    let offset = (batch - 1) as usize * BATCH_SIZE;
+
+    if let Some(tag) = TAGS.get(&keyword) {
+        let mut ids: Vec<u32> = vec![];
+        let mut range = offset;
+
+        for id in tag.ids.iter() {
+            let valid = includes.iter().all(|tag| TAGS.contains_key(tag))
+                && excludes.iter().find(|tag_name| {
+                    if let Some(tag) = TAGS.get(*tag_name) {
+                        tag.ids.contains(id)
+                    } else {
+                        false
+                    }
+                }).is_none();
+
+            if valid {
+                if range > 0 {
+                    range -= 1;
+                } else {
+                    ids.push(id.to_owned());
+                    if ids.len() >= 25 {
+                        break
+                    }
+                }
+            }
+        }
+
+        return (tag.total, ids)
+    }
 
     // Limitation of Meilisearch
     if batch > 40 {         
         return (0, vec![])
     }
 
-    let offset = (batch - 1) as usize * 25;
-
     let to_includes = includes.iter().map(|tag| format!("(tags = \"{}\")", tag)).collect::<Vec<String>>().join(" AND ");
     let to_excludes = excludes.iter().map(|tag| format!("(tags != \"{}\")", tag)).collect::<Vec<String>>().join(" OR ");
 
     let mut query = Query::new(&SEARCH_ENGINE)
         .with_query(&keyword)
-        .with_limit(25)
+        .with_limit(BATCH_SIZE)
         .with_offset(offset)
         .build();
 
