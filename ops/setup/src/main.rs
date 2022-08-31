@@ -136,7 +136,7 @@ pub async fn create_client() {
             ranking_rules: Some(vec![
                 "exactness".to_owned(),
                 "words".to_owned(),
-                "typo".to_owned()
+                "typo".to_owned(),
                 "proximity".to_owned(),
                 "id:desc".to_owned()
             ]),
