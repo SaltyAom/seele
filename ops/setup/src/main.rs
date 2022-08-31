@@ -131,22 +131,22 @@ pub async fn create_client() {
         &Settings {
             displayed_attributes: Some(vec!["id".to_owned()]),
             sortable_attributes: Some(vec!["id".to_owned()]),
-            searchable_attributes: Some(vec!["tags".to_owned(), "title".to_owned()]),
+            searchable_attributes: Some(vec!["title".to_owned()]),
             filterable_attributes: Some(vec!["tags".to_owned()]),
             ranking_rules: Some(vec![
-                "id:desc".to_owned(),
                 "exactness".to_owned(),
                 "words".to_owned(),
-                "attribute".to_owned(),
-                "proximity".to_owned(),
                 "typo".to_owned()
+                "proximity".to_owned(),
+                "id:desc".to_owned()
             ]),
             stop_words: None,
             distinct_attribute: None,
-            synonyms: Some(HashMap::from([
-                ("yaoi".to_owned(), vec!["males only".to_owned()]),
-                ("yuri".to_owned(), vec!["females only".to_owned()])
-            ]))
+            synonyms: None
+            // synonyms: Some(HashMap::from([
+            //     ("yaoi".to_owned(), vec!["males only".to_owned()]),
+            //     ("yuri".to_owned(), vec!["females only".to_owned()])
+            // ]))
         }
     )
         .await
