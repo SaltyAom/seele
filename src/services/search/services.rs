@@ -1,17 +1,23 @@
 use reqwest;
-use std::{collections::{HashMap, hash_map::DefaultHasher}, hash::{Hash, Hasher}, fs::File, io::Read};
+use std::{
+    collections::{hash_map::DefaultHasher, HashMap},
+    fs::File,
+    hash::{Hash, Hasher},
+    io::Read,
+};
 
 use meilisearch_sdk::{
     client::Client,
     indexes::Index,
-    search::{SearchResult, Query},
+    search::{SearchQuery, SearchResult},
 };
 
+use super::models::{HentaiSearch, Status};
 use crate::{models::graphql::nhql::model::NhqlChannel, services::search::models::TagIndex};
-use super::models::{ HentaiSearch, Status };
 
 lazy_static! {
-    pub static ref SEARCH_ENGINE: Index = Client::new("http://localhost:7700", "masterKey").index("hentai");
+    pub static ref SEARCH_ENGINE: Index =
+        Client::new("http://localhost:7700", "masterKey").index("hentai");
 }
 
 pub async fn wait_for_search_engine() {
@@ -24,18 +30,16 @@ pub async fn wait_for_search_engine() {
         interval.tick().await;
 
         match client.get("http://localhost:7700/health").send().await {
-            Ok(response) => {
-                match response.json::<Status>().await {
-                    Ok(res) => {
-                        if res.status == "available" {
-                            break;
-                        }        
-                    },
-                    Err(_) => {
-                        continue;
+            Ok(response) => match response.json::<Status>().await {
+                Ok(res) => {
+                    if res.status == "available" {
+                        break;
                     }
                 }
-            }
+                Err(_) => {
+                    continue;
+                }
+            },
             Err(_) => {
                 continue;
             }
@@ -48,18 +52,19 @@ pub async fn wait_for_search_engine() {
 }
 
 lazy_static! {
-    static ref FILTERS: HashMap<String, &'static str> = HashMap::from([
-        ("yuri".to_owned(), r#"(tags != "yaoi") OR (tags != "yuri or ice") OR (tags != "yuuri") OR (tags != "males only")"#)
-    ]);
+    static ref FILTERS: HashMap<String, &'static str> = HashMap::from([(
+        "yuri".to_owned(),
+        r#"(tags != "yaoi") OR (tags != "yuri or ice") OR (tags != "yuuri") OR (tags != "males only")"#
+    )]);
     static ref TAGS: HashMap<String, TagIndex> = {
         let mut file = File::open("data/tag.json").expect("data/tag.json");
         let mut content = String::new();
-    
+
         file.read_to_string(&mut content)
             .expect("tag.json to be readable");
 
-        let tags: HashMap<String, TagIndex> = serde_json::from_str(&content)
-            .expect("tag.json to be valid JSON");
+        let tags: HashMap<String, TagIndex> =
+            serde_json::from_str(&content).expect("tag.json to be valid JSON");
 
         tags
     };
@@ -71,7 +76,7 @@ pub struct SearchOption {
     pub channel: NhqlChannel,
     pub batch: u16,
     pub includes: Vec<String>,
-    pub excludes: Vec<String>
+    pub excludes: Vec<String>,
 }
 
 impl SearchOption {
@@ -114,12 +119,12 @@ impl SearchOption {
 
 impl Default for SearchOption {
     fn default() -> Self {
-        Self { 
-            keyword: "".to_owned(), 
+        Self {
+            keyword: "".to_owned(),
             batch: 1,
             channel: NhqlChannel::HifuminFirst,
-            includes: vec![], 
-            excludes: vec![] 
+            includes: vec![],
+            excludes: vec![],
         }
     }
 }
@@ -127,23 +132,37 @@ impl Default for SearchOption {
 const BATCH_SIZE: usize = 25;
 
 pub async fn search<'a>(search: SearchOption) -> (u32, Vec<u32>) {
-    let SearchOption { keyword, batch, includes, excludes, .. } = search;
+    let SearchOption {
+        keyword,
+        batch,
+        includes,
+        excludes,
+        ..
+    } = search;
 
     let offset = (batch - 1) as usize * BATCH_SIZE;
 
-    if let Some(tag) = TAGS.get(&keyword) {
+    if let Some(tag) = TAGS.get(&keyword.to_lowercase()) {
         let mut ids: Vec<u32> = vec![];
         let mut range = offset;
 
         for id in tag.ids.iter() {
-            let valid = includes.iter().all(|tag| TAGS.contains_key(tag))
-                && excludes.iter().find(|tag_name| {
-                    if let Some(tag) = TAGS.get(*tag_name) {
+            let valid = includes.iter().all(|tag| {
+                if let Some(target) = TAGS.get(&tag.to_lowercase()) {
+                    target.ids.contains(id)
+                } else {
+                    false
+                }
+            }) && excludes
+                .iter()
+                .find(|tag_name| {
+                    if let Some(tag) = TAGS.get(&tag_name.to_lowercase()) {
                         tag.ids.contains(id)
                     } else {
                         false
                     }
-                }).is_none();
+                })
+                .is_none();
 
             if valid {
                 if range > 0 {
@@ -151,24 +170,32 @@ pub async fn search<'a>(search: SearchOption) -> (u32, Vec<u32>) {
                 } else {
                     ids.push(id.to_owned());
                     if ids.len() >= 25 {
-                        break
+                        break;
                     }
                 }
             }
         }
 
-        return (tag.total, ids)
+        return (tag.total, ids);
     }
 
     // Limitation of Meilisearch
-    if batch > 40 {         
-        return (0, vec![])
+    if batch > 40 {
+        return (0, vec![]);
     }
 
-    let to_includes = includes.iter().map(|tag| format!("(tags = \"{}\")", tag)).collect::<Vec<String>>().join(" AND ");
-    let to_excludes = excludes.iter().map(|tag| format!("(tags != \"{}\")", tag)).collect::<Vec<String>>().join(" OR ");
+    let to_includes = includes
+        .iter()
+        .map(|tag| format!("(tags = \"{}\")", tag))
+        .collect::<Vec<String>>()
+        .join(" AND ");
+    let to_excludes = excludes
+        .iter()
+        .map(|tag| format!("(tags != \"{}\")", tag))
+        .collect::<Vec<String>>()
+        .join(" OR ");
 
-    let mut query = Query::new(&SEARCH_ENGINE)
+    let mut query = SearchQuery::new(&SEARCH_ENGINE)
         .with_query(&keyword)
         .with_limit(BATCH_SIZE)
         .with_offset(offset)
@@ -188,13 +215,13 @@ pub async fn search<'a>(search: SearchOption) -> (u32, Vec<u32>) {
 
     match SEARCH_ENGINE.execute_query(&query).await {
         Ok(results) => (
-            results.nb_hits as u32,
+            results.estimated_total_hits as u32,
             results
                 .hits
                 .into_iter()
                 .map(|hit: SearchResult<HentaiSearch>| hit.result.id)
-                .collect()
-            ),
-        Err(_) => (0, vec![])
+                .collect(),
+        ),
+        Err(_) => (0, vec![]),
     }
 }

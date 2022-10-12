@@ -214,7 +214,7 @@ if ! get_archi; then
     exit 1
 fi
 
-latest="v0.27.2"
+latest="v0.29.1"
 
 echo "Downloading Meilisearch binary $latest for $os, architecture $archi..."
 case "$os" in

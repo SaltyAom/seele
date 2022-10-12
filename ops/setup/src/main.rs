@@ -3,7 +3,6 @@ use std::{
     io::{prelude::Read, BufReader, BufRead},
     process::{Command, Stdio, exit, Child},
     thread,
-    collections::HashMap,
     env::current_dir, time::Duration
 };
 
@@ -13,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use meilisearch_sdk::{
     client::Client,
-    settings::Settings,
+    settings::{ Settings, PaginationSetting },
 };
 
 use reqwest;
@@ -133,6 +132,10 @@ pub async fn create_client() {
             sortable_attributes: Some(vec!["id".to_owned()]),
             searchable_attributes: Some(vec!["title".to_owned()]),
             filterable_attributes: Some(vec!["tags".to_owned()]),
+            faceting: None,
+            pagination: Some(PaginationSetting {
+                max_total_hits: 2000,
+            }),
             ranking_rules: Some(vec![
                 "exactness".to_owned(),
                 "words".to_owned(),
