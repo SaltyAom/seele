@@ -39,6 +39,7 @@ fn start_listener() -> Child {
     );
 
     let mut child = Command::new("./meilisearch")
+        .args(["--http-payload-size-limit", "1048576000"])
         .stdout(Stdio::piped())
         .spawn()
         .expect("Failed to start meilisearch");
